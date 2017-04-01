@@ -3,6 +3,7 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_settings">Settings</string>
+    <string name="dialogAccept">Ok</string>
     <string name="internet">Not connected to internet</string>
     <string name="google_api_key">AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg</string>
     <string name="google_dir_key">AIzaSyCj9ZJU7AnM0DMXhOIQwHGAcLwZvROD39k</string>
