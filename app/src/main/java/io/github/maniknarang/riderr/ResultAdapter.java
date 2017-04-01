@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -33,8 +34,21 @@ public class ResultAdapter extends ArrayAdapter<Result>
         distance.setText(result.distance);
         TextView duration = (TextView) view.findViewById(R.id.result_duration);
         duration.setText(result.duration);
-        TextView image = (TextView) view.findViewById(R.id.result_image);
-        image.setText(result.travelMode);
+        ImageView image = (ImageView) view.findViewById(R.id.result_image);
+        switch (result.travelMode)
+        {
+            case "DRIVING":
+                image.setImageResource(R.drawable.ic_directions_car_black_24dp);
+                break;
+            case "WALKING":
+                image.setImageResource(R.drawable.ic_directions_walk_black_24dp);
+                break;
+            case "BICYCLING":
+                image.setImageResource(R.drawable.ic_directions_bike_black_24dp);
+                break;
+            default:
+                image.setImageResource(R.drawable.ic_directions_transit_black_24dp);;
+        }
         //Image to be added
         return view;
     }
