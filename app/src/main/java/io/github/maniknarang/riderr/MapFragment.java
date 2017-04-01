@@ -77,7 +77,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         getMap().setMapType( MAP_TYPES[curMapTypeIndex] );
         getMap().setTrafficEnabled( true );
         getMap().setMyLocationEnabled( true );
-        getMap().getUiSettings().setZoomControlsEnabled( true );
     }
 
     private void handleLocation(Location mCurrentLocation)
@@ -137,9 +136,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         MarkerOptions options = new MarkerOptions().position( latLng );
         options.title( getAddressFromLatLng( latLng ) );
 
-        options.icon( BitmapDescriptorFactory.fromBitmap(
-                BitmapFactory.decodeResource( getResources(),
-                        R.mipmap.ic_launcher ) ) );
+        options.icon( BitmapDescriptorFactory.defaultMarker() );
 
         getMap().addMarker( options );
     }
