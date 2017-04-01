@@ -2,11 +2,9 @@ package io.github.maniknarang.riderr;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -43,8 +41,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import static io.github.maniknarang.riderr.R.menu.map;
 
 public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
@@ -413,28 +409,31 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             MarkerOptions markerOptions = new MarkerOptions();
 
             // Traversing through all the routes
-            for (int i = 0; i < lists.size(); i++) {
-                points = new ArrayList<LatLng>();
-                lineOptions = new PolylineOptions();
+            // Prevent crashing if not connected to the internet
+            if (lists != null) {
+                for (int i = 0; i < lists.size(); i++) {
+                    points = new ArrayList<LatLng>();
+                    lineOptions = new PolylineOptions();
 
-                // Fetching i-th route
-                List<HashMap<String, String>> path = lists.get(i);
+                    // Fetching i-th route
+                    List<HashMap<String, String>> path = lists.get(i);
 
-                // Fetching all the points in i-th route
-                for (int j = 0; j < path.size(); j++) {
-                    HashMap<String, String> point = path.get(j);
+                    // Fetching all the points in i-th route
+                    for (int j = 0; j < path.size(); j++) {
+                        HashMap<String, String> point = path.get(j);
 
-                    double lat = Double.parseDouble(point.get("lat"));
-                    double lng = Double.parseDouble(point.get("lng"));
-                    LatLng position = new LatLng(lat, lng);
+                        double lat = Double.parseDouble(point.get("lat"));
+                        double lng = Double.parseDouble(point.get("lng"));
+                        LatLng position = new LatLng(lat, lng);
 
-                    points.add(position);
+                        points.add(position);
+                    }
+
+                    // Adding all the points in the route to LineOptions
+                    lineOptions.addAll(points);
+                    lineOptions.width(10);
+                    lineOptions.color(Color.RED);
                 }
-
-                // Adding all the points in the route to LineOptions
-                lineOptions.addAll(points);
-                lineOptions.width(10);
-                lineOptions.color(Color.RED);
             }
 
             // Drawing polyline in the Google Map for the i-th route
