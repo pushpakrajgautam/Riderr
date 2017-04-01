@@ -1,6 +1,9 @@
 package io.github.maniknarang.riderr;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -8,6 +11,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -31,7 +35,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -74,15 +77,23 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             mGoogleApiClient.disconnect();
     }
 
-    @Override
     public void onConnected(Bundle bundle)
     {
         mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if(mCurrentLocation == null)
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        else
+
+        if(mCurrentLocation == null) {
+            if (mLocationRequest == null) {
+                LocationAlertDialog(getActivity());
+
+                mLocationRequest = LocationRequest.create();
+            }
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                    mLocationRequest, this);
+        }
+        else {
             handleLocation(mCurrentLocation);
-        initCamera(mCurrentLocation);
+            initCamera(mCurrentLocation);
+        }
     }
 
     private void initCamera(Location mCurrentLocation)
@@ -283,7 +294,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         if (ContextCompat.checkSelfPermission(getActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION)
+                ContextCompat.checkSelfPermission(getContext(),
+                        android.Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED)
         {
 
@@ -300,7 +312,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults)
     {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode)
@@ -455,6 +468,25 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             Toast.makeText(getContext(),"Long Tap to see routes!",Toast.LENGTH_LONG).show();
             mapped = true;
         }
+    }
 
+    public void LocationAlertDialog(final Context context) {
+
+        AlertDialog.Builder d = new AlertDialog.Builder(context);
+        d.setTitle("No Providers");
+        d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
+
+        d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // TODO Auto-generated method stub
+                Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivityForResult(i, 0);
+            }
+        });
+        AlertDialog dialog = d.create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
     }
 }
