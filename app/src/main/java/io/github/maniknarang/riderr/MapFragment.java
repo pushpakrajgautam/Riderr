@@ -474,6 +474,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
 
         AlertDialog.Builder d = new AlertDialog.Builder(context);
         d.setTitle("No Providers");
+        d.setCancelable(false);
         d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
 
         d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener() {
