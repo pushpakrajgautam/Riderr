@@ -1,6 +1,7 @@
 package io.github.maniknarang.riderr;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Geocoder;
@@ -30,6 +31,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -55,6 +57,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     private LocationRequest mLocationRequest;
     private boolean mapped = false;
     private ArrayList<LatLng> markerPoints;
+    private String url;
 
     @Override
     public void onStart()
@@ -118,21 +121,30 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onMapClick(LatLng latLng)
     {
-        markerPoints.clear();
-        getMap().clear();
-        LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-        markerPoints.add(origin);
-        markerPoints.add(latLng);
-        MarkerOptions options = new MarkerOptions().position(latLng);
-        options.title(getAddressFromLatLng(latLng));
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        getMap().addMarker(options).setDraggable(true);
-        if(markerPoints.size() >= 2)
+        if(mapped)
         {
-            LatLng dest = markerPoints.get(1);
-            String url = getDirectionsUrl(origin, dest);
-            DownloadTask downloadTask = new DownloadTask();
-            downloadTask.execute(url);
+            mapped=false;
+            Intent intent = new Intent(getActivity(),ResultActivity.class);
+            intent.putExtra("JsonUrl",url);
+            startActivity(intent);
+        }
+        else
+        {
+            markerPoints.clear();
+            getMap().clear();
+            LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+            markerPoints.add(origin);
+            markerPoints.add(latLng);
+            MarkerOptions options = new MarkerOptions().position(latLng);
+            options.title(getAddressFromLatLng(latLng));
+            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            getMap().addMarker(options).setDraggable(true);
+            if (markerPoints.size() >= 2) {
+                LatLng dest = markerPoints.get(1);
+                url = getDirectionsUrl(origin, dest);
+                DownloadTask downloadTask = new DownloadTask();
+                downloadTask.execute(url);
+            }
         }
     }
 
@@ -441,6 +453,9 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 // Drawing polyline in the Google Map for the i-th route
                 getMap().addPolyline(lineOptions);
             }
+
+            Toast.makeText(getContext(),"Tap again to see routes!",Toast.LENGTH_LONG).show();
+            mapped = true;
         }
 
     }
