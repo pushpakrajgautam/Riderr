@@ -121,15 +121,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onMapClick(LatLng latLng)
     {
-        if(mapped)
-        {
-            mapped=false;
-            Intent intent = new Intent(getActivity(),ResultActivity.class);
-            intent.putExtra("JsonUrl",url);
-            startActivity(intent);
-        }
-        else
-        {
             markerPoints.clear();
             getMap().clear();
             LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
@@ -145,13 +136,12 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 DownloadTask downloadTask = new DownloadTask();
                 downloadTask.execute(url);
             }
-        }
     }
 
     private String getDirectionsUrl(LatLng origin, LatLng dest)
     {
         // Origin of route
-        String str_origin = "origin="+origin.latitude+","+origin.longitude;
+        String str_origin = "&origin="+origin.latitude+","+origin.longitude;
 
         // Destination of route
         String str_dest = "destination="+dest.latitude+","+dest.longitude;
@@ -166,7 +156,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         String output = "json";
 
         // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters;
+        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+
+                "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
 
         return url;
     }
@@ -238,6 +229,13 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         options.icon( BitmapDescriptorFactory.defaultMarker() );
 
         getMap().addMarker( options );*/
+        if(mapped)
+        {
+            mapped=false;
+            Intent intent = new Intent(getActivity(),ResultActivity.class);
+            intent.putExtra("JsonUrl",url);
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -454,7 +452,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 getMap().addPolyline(lineOptions);
             }
 
-            Toast.makeText(getContext(),"Tap again to see routes!",Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(),"Long Tap to see routes!",Toast.LENGTH_LONG).show();
             mapped = true;
         }
 

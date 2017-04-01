@@ -9,6 +9,9 @@ import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -31,14 +34,22 @@ import java.util.List;
 
 public class ResultActivity extends AppCompatActivity
 {
+    private ResultAdapter adapter;
+    private ListView listView;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.result_viw);
         Intent intent = getIntent();
         String url = intent.getStringExtra("JsonUrl");
         DownloadTask downloadTask = new DownloadTask();
-        downloadTask.execute(url);
+        String url1 = url + "&mode=transit";
+        String url2 = url + "&mode=walking";
+        String url3 = url + "&mode=bicycling";
+        String urls[] = new String[]{url,url1,url2,url3};
+        downloadTask.execute(urls);
+
     }
 
     @Override
@@ -53,28 +64,34 @@ public class ResultActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private class DownloadTask extends AsyncTask<String, Void, String>
+    private class DownloadTask extends AsyncTask<String, Void, String[]>
     {
         @Override
-        protected String doInBackground(String... url)
+        protected String[] doInBackground(String... url)
         {
             // For storing data from web service
-            String data = "";
+            String data1 = "";
+            String data2 = "";
+            String data3 = "";
+            String data4 = "";
 
             try
             {
                 // Fetching the data from web service
-                data = downloadUrl(url[0]);
+                data1 = downloadUrl(url[0]);
+                data2 = downloadUrl(url[1]);
+                data3 = downloadUrl(url[2]);
+                data4 = downloadUrl(url[3]);
             }
             catch(Exception e)
             {
                 Log.d("Background Task",e.toString());
             }
-            return data;
+            return new String[]{data1,data2,data3,data4};
         }
 
         @Override
-        protected void onPostExecute(String s)
+        protected void onPostExecute(String[] s)
         {
             super.onPostExecute(s);
             ParserTask parserTask = new ParserTask();
@@ -84,33 +101,64 @@ public class ResultActivity extends AppCompatActivity
         }
     }
 
-    private class ParserTask extends AsyncTask<String, Integer, String[]>
+    private class ParserTask extends AsyncTask<String, Integer, ArrayList<Result>>
     {
 
         @Override
-        protected String[] doInBackground(String... jsonData)
+        protected ArrayList<Result> doInBackground(String... jsonData)
         {
             JSONObject jObject;
             JSONArray routes=null;
+            ArrayList<Result> resultArrayList = new ArrayList<>();
             try
             {
-                jObject = new JSONObject(jsonData[0]);
-                routes = jObject.getJSONArray("routes");
+                for(int l=0; l<4; l++) {
+                    jObject = new JSONObject(jsonData[l]);
+                    routes = jObject.getJSONArray("routes");
+                    for (int i = 0; i < routes.length(); i++) {
+                        JSONObject travelC = routes.getJSONObject(i).optJSONObject("fare");
+                        String travelCurr = "$0.00";
+                        if (travelC != null)
+                            travelCurr = travelC.getString("text");
+                        JSONArray legs = routes.getJSONObject(i).getJSONArray("legs");
+                        for (int j = 0; j < legs.length(); j++) {
+                            String travelDur = legs.getJSONObject(j).getJSONObject("duration").getString("text");
+                            String travelDist = legs.getJSONObject(j).getJSONObject("distance").getString("text");
+                            String travelMode = legs.getJSONObject(j).getJSONArray("steps").getJSONObject(0).getString("travel_mode");
+                            Result res = new Result(travelMode, travelDist, travelDur, travelCurr);
+                            resultArrayList.add(res);
+                        }
+                    }
+                }
             }
             catch (JSONException e)
             {
                 e.printStackTrace();
             }
 
-            return null;
+            return resultArrayList;
         }
 
         @Override
-        protected void onPostExecute(String[] lists)
+        protected void onPostExecute(ArrayList<Result> lists)
         {
             super.onPostExecute(lists);
-        }
+            if(lists!=null)
+                adapter = new ResultAdapter(ResultActivity.this,lists);
+            listView = (ListView) findViewById(R.id.list_view);
+            if(adapter != null)
+            {
+                listView.setAdapter(adapter);
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+                {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
+                    {
 
+                    }
+                });
+            }
+        }
     }
 
     private String downloadUrl(String strUrl) throws IOException
