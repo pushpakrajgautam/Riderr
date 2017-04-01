@@ -186,11 +186,11 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
                     Manifest.permission.ACCESS_FINE_LOCATION))
             {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
             else
             {
-                ActivityCompat.requestPermissions(getActivity(),
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
         }
     }
