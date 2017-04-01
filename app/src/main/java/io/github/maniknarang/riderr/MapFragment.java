@@ -436,8 +436,11 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 }
             }
 
-            // Drawing polyline in the Google Map for the i-th route
-            getMap().addPolyline(lineOptions);
+            // Check for PolylineOptions. This cannot be null
+            if (lineOptions != null) {
+                // Drawing polyline in the Google Map for the i-th route
+                getMap().addPolyline(lineOptions);
+            }
         }
 
     }
