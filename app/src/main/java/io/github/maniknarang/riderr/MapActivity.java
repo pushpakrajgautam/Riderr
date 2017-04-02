@@ -76,6 +76,7 @@ public class MapActivity extends AppCompatActivity
                 ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED)
         {
+
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION))
             {
@@ -166,6 +167,7 @@ public class MapActivity extends AppCompatActivity
 
         if (id == R.id.nav_menu)
         {
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -188,6 +190,7 @@ public class MapActivity extends AppCompatActivity
                             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                             .setInterval(10 * 1000)
                             .setFastestInterval(1 * 1000);
+
                 }
                 else
                 {

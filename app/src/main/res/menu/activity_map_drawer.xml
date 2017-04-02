@@ -4,9 +4,8 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_menu"
-            android:icon="@drawable/ic_feedback_black_24dp"
-            android:title="Feedback"
-            android:onClick="support" />
+            android:icon="@drawable/ic_settings_black_24dp"
+            android:title="Settings" />
     </group>
 
 </menu>

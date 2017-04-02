@@ -48,9 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener,
-        GoogleMap.OnMapLongClickListener, GoogleMap.OnMapClickListener,
-        GoogleMap.OnMarkerClickListener, LocationListener, GoogleMap.OnMarkerDragListener
+        GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener,GoogleMap.OnMarkerDragListener
 {
     private GoogleApiClient mGoogleApiClient;
     public static Location mCurrentLocation;
@@ -404,7 +403,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         }
     }
 
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>>>
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >
     {
 
         @Override
@@ -479,6 +478,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
 
         d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
