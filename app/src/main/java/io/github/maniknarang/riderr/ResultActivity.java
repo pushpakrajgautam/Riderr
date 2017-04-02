@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -22,10 +23,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.uber.sdk.android.core.UberSdk;
+import com.uber.sdk.android.core.auth.AccessTokenManager;
+import com.uber.sdk.android.core.auth.AuthenticationError;
+import com.uber.sdk.android.core.auth.LoginCallback;
+import com.uber.sdk.android.core.auth.LoginManager;
 import com.uber.sdk.android.rides.RideParameters;
 import com.uber.sdk.android.rides.RideRequestActivityBehavior;
 import com.uber.sdk.android.rides.RideRequestButton;
 import com.uber.sdk.android.rides.RideRequestButtonCallback;
+import com.uber.sdk.core.auth.AccessToken;
 import com.uber.sdk.core.auth.Scope;
 import com.uber.sdk.rides.client.ServerTokenSession;
 import com.uber.sdk.rides.client.SessionConfiguration;
@@ -54,6 +60,7 @@ public class ResultActivity extends AppCompatActivity
     private String originAdd, destAdd;
     private TextView originText;
     private TextView destText;
+    private LoginManager loginManager;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -70,45 +77,52 @@ public class ResultActivity extends AppCompatActivity
         destText = (TextView) findViewById(R.id.dest_text);
 
         SessionConfiguration config = new SessionConfiguration.Builder()
-                .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK") //This is necessary
-                .setRedirectUri("https://maniknarang.github.io") //This is necessary if you'll be using implicit grant
-                .setEnvironment(SessionConfiguration.Environment.SANDBOX) //Useful for testing your app in the sandbox environment
-                .setScopes(Arrays.asList(Scope.PROFILE, Scope.RIDE_WIDGETS)) //Your scopes for authentication here
+                // mandatory
+                .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
+                // required for enhanced button features
+                .setServerToken("4E4HmWduJNBOCa-au7mfTkRof-MVBfPf-giQqNCu")
+                // required for implicit grant authentication
+                .setRedirectUri("gEH7g1vD2lJxewUaOKUsg4WisxM3iK://uberConnect")
+                // required scope for Ride Request Widget features
+                .setScopes(Arrays.asList(Scope.RIDE_WIDGETS))
+                // optional: set Sandbox as operating environment
+                .setEnvironment(SessionConfiguration.Environment.SANDBOX)
                 .build();
         UberSdk.initialize(config);
         double origin1 = intent.getDoubleExtra("origin1",0.00);
         double origin2 = intent.getDoubleExtra("origin2",0.00);
         double dest1 = intent.getDoubleExtra("dest1",0.00);
         double dest2 = intent.getDoubleExtra("dest2",0.00);
-        RideRequestButtonCallback callback = new RideRequestButtonCallback() {
-
+        LoginCallback loginCallback = new LoginCallback() {
             @Override
-            public void onRideInformationLoaded() {
-
+            public void onLoginCancel() {
+                // User canceled login
             }
 
             @Override
-            public void onError(ApiError apiError) {
-
+            public void onLoginError(@NonNull AuthenticationError error) {
+                // Error occurred during login
             }
 
             @Override
-            public void onError(Throwable throwable) {
+            public void onLoginSuccess(@NonNull AccessToken accessToken) {
+                // Successful login!  The AccessToken will have already been saved.
+            }
+
+            @Override
+            public void onAuthorizationCodeReceived(@NonNull String authorizationCode) {
 
             }
         };
+        AccessTokenManager accessTokenManager = new AccessTokenManager(this);
+        loginManager = new LoginManager(accessTokenManager, loginCallback);
+        loginManager.login(this);
+        RideRequestButton rideRequestButton = (RideRequestButton) findViewById(R.id.request_buttona);
         RideParameters rideParams = new RideParameters.Builder()
-                .setProductId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
-                .setPickupLocation(origin1,origin2,null,originAdd)
+                .setPickupLocation(origin1, origin2, null, originAdd)
                 .setDropoffLocation(dest1,dest2,null,destAdd)
                 .build();
-        ServerTokenSession session = new ServerTokenSession(config);
-        RideRequestButton requestButton = (RideRequestButton) findViewById(R.id.request_buttona);
-        requestButton.setRideParameters(rideParams);
-        requestButton.setRequestBehavior(new RideRequestActivityBehavior(this, 201));
-        requestButton.setCallback(callback);
-        requestButton.setSession(session);
-        requestButton.loadRideInformation();
+        rideRequestButton.setRideParameters(rideParams);
     }
 
     @Override
@@ -289,5 +303,11 @@ public class ResultActivity extends AppCompatActivity
             urlConnection.disconnect();
         }
         return data;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+        loginManager.onActivityResult(this, requestCode, resultCode, data);
     }
 }
