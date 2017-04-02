@@ -61,6 +61,7 @@ public class ResultActivity extends AppCompatActivity
     private TextView originText;
     private TextView destText;
     private LoginManager loginManager;
+    private double origin1,origin2,dest1,dest2;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -75,7 +76,14 @@ public class ResultActivity extends AppCompatActivity
         downloadTask.execute(urls);
         originText = (TextView) findViewById(R.id.origin_text);
         destText = (TextView) findViewById(R.id.dest_text);
+        origin1 = intent.getDoubleExtra("origin1",0.00);
+        origin2 = intent.getDoubleExtra("origin2",0.00);
+        dest1 = intent.getDoubleExtra("dest1",0.00);
+        dest2 = intent.getDoubleExtra("dest2",0.00);
+    }
 
+    public void requested(View v)
+    {
         SessionConfiguration config = new SessionConfiguration.Builder()
                 // mandatory
                 .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
@@ -89,10 +97,6 @@ public class ResultActivity extends AppCompatActivity
                 .setEnvironment(SessionConfiguration.Environment.SANDBOX)
                 .build();
         UberSdk.initialize(config);
-        double origin1 = intent.getDoubleExtra("origin1",0.00);
-        double origin2 = intent.getDoubleExtra("origin2",0.00);
-        double dest1 = intent.getDoubleExtra("dest1",0.00);
-        double dest2 = intent.getDoubleExtra("dest2",0.00);
         LoginCallback loginCallback = new LoginCallback() {
             @Override
             public void onLoginCancel() {
