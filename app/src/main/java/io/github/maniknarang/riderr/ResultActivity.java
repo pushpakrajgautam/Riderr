@@ -51,7 +51,7 @@ public class ResultActivity extends AppCompatActivity
     private TextView originText;
     private TextView destText;
     private LoginManager loginManager;
-    private double origin1,origin2,dest1,dest2;
+    public double origin1,origin2,dest1,dest2;
     private boolean compared = false;
     @Override
     protected void onCreate(Bundle savedInstanceState)
