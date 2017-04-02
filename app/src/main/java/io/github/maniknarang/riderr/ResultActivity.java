@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.uber.sdk.android.core.UberSdk;
 import com.uber.sdk.android.core.auth.AccessTokenManager;
@@ -94,6 +95,7 @@ public class ResultActivity extends AppCompatActivity
                     Log.v("my","name");
                     Intent intent = getIntent();
                     finish();
+                    Toast.makeText(ResultActivity.this,"Refreshed for better data",Toast.LENGTH_LONG).show();
                     startActivity(intent);
 
                 }
