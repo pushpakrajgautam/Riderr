@@ -111,6 +111,10 @@ public class MapActivity extends AppCompatActivity
                         "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
                 Intent intent = new Intent(MapActivity.this,ResultActivity.class);
                 intent.putExtra("JsonUrl",url);
+                intent.putExtra("origin1",origin.latitude);
+                intent.putExtra("origin2",origin.longitude);
+                intent.putExtra("dest1",dest.latitude);
+                intent.putExtra("dest2",dest.longitude);
                 startActivity(intent);
             }
 

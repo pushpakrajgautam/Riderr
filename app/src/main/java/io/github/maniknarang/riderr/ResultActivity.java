@@ -13,15 +13,26 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.uber.sdk.android.core.UberSdk;
+import com.uber.sdk.android.rides.RideParameters;
+import com.uber.sdk.android.rides.RideRequestActivityBehavior;
+import com.uber.sdk.android.rides.RideRequestButton;
+import com.uber.sdk.android.rides.RideRequestButtonCallback;
+import com.uber.sdk.core.auth.Scope;
+import com.uber.sdk.rides.client.ServerTokenSession;
+import com.uber.sdk.rides.client.SessionConfiguration;
+import com.uber.sdk.rides.client.error.ApiError;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,6 +41,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -37,6 +49,9 @@ public class ResultActivity extends AppCompatActivity
 {
     private ResultAdapter adapter;
     private ListView listView;
+    private String originAdd, destAdd;
+    private TextView originText;
+    private TextView destText;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -49,7 +64,49 @@ public class ResultActivity extends AppCompatActivity
         String url3 = url + "&mode=bicycling";
         String urls[] = new String[]{url,url2,url3};
         downloadTask.execute(urls);
+        originText = (TextView) findViewById(R.id.origin_text);
+        destText = (TextView) findViewById(R.id.dest_text);
 
+        SessionConfiguration config = new SessionConfiguration.Builder()
+                .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK") //This is necessary
+                .setRedirectUri("https://maniknarang.github.io") //This is necessary if you'll be using implicit grant
+                .setEnvironment(SessionConfiguration.Environment.SANDBOX) //Useful for testing your app in the sandbox environment
+                .setScopes(Arrays.asList(Scope.PROFILE, Scope.RIDE_WIDGETS)) //Your scopes for authentication here
+                .build();
+        UberSdk.initialize(config);
+        double origin1 = intent.getDoubleExtra("origin1",0.00);
+        double origin2 = intent.getDoubleExtra("origin2",0.00);
+        double dest1 = intent.getDoubleExtra("dest1",0.00);
+        double dest2 = intent.getDoubleExtra("dest2",0.00);
+        RideRequestButtonCallback callback = new RideRequestButtonCallback() {
+
+            @Override
+            public void onRideInformationLoaded() {
+
+            }
+
+            @Override
+            public void onError(ApiError apiError) {
+
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+        };
+        RideParameters rideParams = new RideParameters.Builder()
+                .setProductId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
+                .setPickupLocation(origin1,origin2,null,originAdd)
+                .setDropoffLocation(dest1,dest2,null,destAdd)
+                .build();
+        ServerTokenSession session = new ServerTokenSession(config);
+        RideRequestButton requestButton = (RideRequestButton) findViewById(R.id.request_buttona);
+        requestButton.setRideParameters(rideParams);
+        requestButton.setRequestBehavior(new RideRequestActivityBehavior(this, 201));
+        requestButton.setCallback(callback);
+        requestButton.setSession(session);
+        requestButton.loadRideInformation();
     }
 
     @Override
@@ -141,6 +198,8 @@ public class ResultActivity extends AppCompatActivity
                         }
                     }
                 }
+                originAdd = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getString("start_address");
+                destAdd = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getString("end_address");
             }
             catch (JSONException e)
             {
@@ -169,6 +228,10 @@ public class ResultActivity extends AppCompatActivity
                     }
                 });
             }
+            Log.v("hey",originAdd);
+            Log.v("hey",destAdd);
+            originText.setText(originAdd);
+            destText.setText(destAdd);
         }
     }
 
