@@ -53,7 +53,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         GoogleMap.OnMarkerClickListener, LocationListener, GoogleMap.OnMarkerDragListener
 {
     private GoogleApiClient mGoogleApiClient;
-    private Location mCurrentLocation;
+    public static Location mCurrentLocation;
     private final int[] MAP_TYPES = {GoogleMap.MAP_TYPE_SATELLITE, GoogleMap.MAP_TYPE_NORMAL,
                                      GoogleMap.MAP_TYPE_HYBRID, GoogleMap.MAP_TYPE_TERRAIN,
                                      GoogleMap.MAP_TYPE_NONE };

@@ -3,6 +3,7 @@ package io.github.maniknarang.riderr;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,11 +16,22 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.EditText;
 
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.model.LatLng;
+
+import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
 
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback
@@ -58,8 +70,6 @@ public class MapActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        EditText searchBar = (EditText) findViewById(R.id.search_it);
-
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
@@ -76,6 +86,42 @@ public class MapActivity extends AppCompatActivity
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
         }
+        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place)
+            {
+                LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+                LatLng dest = place.getLatLng();
+                String str_origin = "&origin="+origin.latitude+","+origin.longitude;
+
+                // Destination of route
+                String str_dest = "destination="+dest.latitude+","+dest.longitude;
+
+                // Sensor enabled
+                String sensor = "sensor=false";
+
+                // Building the parameters to the web service
+                String parameters = str_origin+"&"+str_dest+"&"+sensor;
+
+                // Output format
+                String output = "json";
+
+                // Building the url to the web service
+                String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+
+                        "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                Intent intent = new Intent(MapActivity.this,ResultActivity.class);
+                intent.putExtra("JsonUrl",url);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onError(Status status)
+            {
+            }
+        });
     }
 
     @Override
@@ -151,4 +197,5 @@ public class MapActivity extends AppCompatActivity
             }
         }
     }
+
 }
