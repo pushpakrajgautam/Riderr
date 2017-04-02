@@ -10,7 +10,7 @@ Riderr optimizes your travel by giving you the accurate transit data. Through Ri
 We used Google Location Services API to access the users location. Then, we created a server to put the store the information of prices of travelling means by inspecting the prices during the same time in the previous days using machine learning. We create a graph to see the price comparisons, and give the optimal prices during the day.
 #
 ![alt tag](https://s23.postimg.org/ct0vlw4bf/Untitled1.png)
-#
+
 ![alt tag](https://s24.postimg.org/wyosxauhh/Untitled2.png)
 
 ## Challenges we ran into
