@@ -154,11 +154,8 @@ public class MapActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
-                    "mailto","narang_manik@rocketmail.com", null));
-            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Riderr");
-            startActivity(Intent.createChooser(emailIntent, "Send Email..."));
+        if (id == R.id.action_settings)
+        {
             return true;
         }
         return super.onOptionsItemSelected(item);
