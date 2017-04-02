@@ -31,6 +31,7 @@ import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback
 {
+    private PlaceAutocompleteFragment autocompleteFragment;
     public static LocationRequest mLocationRequest;
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -82,7 +83,7 @@ public class MapActivity extends AppCompatActivity
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
         }
-        PlaceAutocompleteFragment autocompleteFragment = (PlaceAutocompleteFragment)
+        autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
 
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -194,6 +195,12 @@ public class MapActivity extends AppCompatActivity
                 return;
             }
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        autocompleteFragment.setText("");
     }
 
 }

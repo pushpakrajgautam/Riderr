@@ -45,10 +45,9 @@ public class ResultActivity extends AppCompatActivity
         Intent intent = getIntent();
         String url = intent.getStringExtra("JsonUrl");
         DownloadTask downloadTask = new DownloadTask();
-        String url1 = url + "&mode=transit";
         String url2 = url + "&mode=walking";
         String url3 = url + "&mode=bicycling";
-        String urls[] = new String[]{url,url1,url2,url3};
+        String urls[] = new String[]{url,url2,url3};
         downloadTask.execute(urls);
 
     }
@@ -87,7 +86,6 @@ public class ResultActivity extends AppCompatActivity
             String data1 = "";
             String data2 = "";
             String data3 = "";
-            String data4 = "";
 
             try
             {
@@ -95,13 +93,12 @@ public class ResultActivity extends AppCompatActivity
                 data1 = downloadUrl(url[0]);
                 data2 = downloadUrl(url[1]);
                 data3 = downloadUrl(url[2]);
-                data4 = downloadUrl(url[3]);
             }
             catch(Exception e)
             {
                 Log.d("Background Task",e.toString());
             }
-            return new String[]{data1,data2,data3,data4};
+            return new String[]{data1,data2,data3};
         }
 
         @Override
@@ -126,7 +123,7 @@ public class ResultActivity extends AppCompatActivity
             ArrayList<Result> resultArrayList = new ArrayList<>();
             try
             {
-                for(int l=0; l<4; l++) {
+                for(int l=0; l<3; l++) {
                     jObject = new JSONObject(jsonData[l]);
                     routes = jObject.getJSONArray("routes");
                     for (int i = 0; i < routes.length(); i++) {
@@ -214,5 +211,4 @@ public class ResultActivity extends AppCompatActivity
         }
         return data;
     }
-
 }
