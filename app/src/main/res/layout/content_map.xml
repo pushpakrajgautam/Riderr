@@ -18,17 +18,13 @@
             android:name="io.github.maniknarang.riderr.MapFragment"
             android:id="@+id/map_fragment"/>
 
-        <EditText
-            android:id="@+id/search_it"
-            android:layout_marginTop="12dp"
-            android:layout_marginLeft="20dp"
-            android:padding="8dp"
-            android:layout_gravity="left|top"
-            android:layout_width="280dp"
-            android:background="@drawable/rect"
-            android:textSize="16sp"
+        <fragment
+            android:id="@+id/place_autocomplete_fragment"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Where To Go"/>
+            android:layout_marginRight="32dp"
+            android:layout_marginLeft="32dp"
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment" />
 
     </FrameLayout>
 </RelativeLayout>
