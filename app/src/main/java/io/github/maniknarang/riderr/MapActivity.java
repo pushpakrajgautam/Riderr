@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -154,6 +155,10 @@ public class MapActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto","narang_manik@rocketmail.com", null));
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Riderr");
+            startActivity(Intent.createChooser(emailIntent, "Send Email..."));
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -167,8 +172,12 @@ public class MapActivity extends AppCompatActivity
 
         if (id == R.id.nav_menu)
         {
-
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto","narang_manik@rocketmail.com", null));
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Riderr");
+            startActivity(Intent.createChooser(emailIntent, "Send Email..."));
         }
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
