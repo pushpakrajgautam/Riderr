@@ -1,5 +1,6 @@
 package io.github.maniknarang.riderr;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -30,7 +31,8 @@ public class CompareFragment extends android.support.v4.app.Fragment
         double origin2 = ((ResultActivity) getActivity()).origin2;
         double dest1 = ((ResultActivity) getActivity()).dest1;
         double dest2 = ((ResultActivity) getActivity()).dest2;
-        Glide.with(this).load("http://serv1.anmolahuja.com/api/get_graph?start_longitude="+
-                origin1+"&start_latitude="+origin2+"&end_longitude="+dest1+"&end_latitude="+dest2).into(graph);
+        String url = "http://serv1.anmolahuja.com/api/get_graph?start_longitude="+
+                origin1+"&start_latitude="+origin2+"&end_longitude="+dest1+"&end_latitude="+dest2;
+        Glide.with(this).load(url).into(graph);
     }
 }

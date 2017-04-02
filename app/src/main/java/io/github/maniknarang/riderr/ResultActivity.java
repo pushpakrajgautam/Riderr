@@ -3,6 +3,8 @@ package io.github.maniknarang.riderr;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -42,6 +44,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 
 public class ResultActivity extends AppCompatActivity
 {
@@ -53,6 +56,9 @@ public class ResultActivity extends AppCompatActivity
     private LoginManager loginManager;
     public double origin1,origin2,dest1,dest2;
     private boolean compared = false;
+    private final long delayMillis=1000;
+    private Handler h=null;
+    private Runnable r;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -71,6 +77,35 @@ public class ResultActivity extends AppCompatActivity
         origin2 = intent.getDoubleExtra("origin2",0.00);
         dest1 = intent.getDoubleExtra("dest1",0.00);
         dest2 = intent.getDoubleExtra("dest2",0.00);
+
+        final Calendar a = Calendar.getInstance();
+
+        h=new Handler(Looper.getMainLooper());
+        r = new Runnable() {
+
+            public void run() {
+
+                //current time
+                Calendar c = Calendar.getInstance();
+
+                if(c.get(Calendar.MINUTE) - a.get(Calendar.MINUTE) >=5)
+                {
+
+                    Log.v("my","name");
+                    Intent intent = getIntent();
+                    finish();
+                    startActivity(intent);
+
+                }
+
+
+                h.postDelayed(this, delayMillis);
+
+            }
+        };
+
+        h.post(r);
+
         SessionConfiguration config = new SessionConfiguration.Builder()
                 // mandatory
                 .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
