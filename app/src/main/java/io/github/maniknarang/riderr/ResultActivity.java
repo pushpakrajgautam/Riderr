@@ -95,11 +95,10 @@ public class ResultActivity extends AppCompatActivity
                     Log.v("my","name");
                     Intent intent = getIntent();
                     intent.putExtra("JsonUrl",urla);
-                    finish();
                     Toast.makeText(ResultActivity.this,"Refreshed for better data",
                             Toast.LENGTH_SHORT).show();
+                    finish();
                     startActivity(intent);
-
                 }
 
 
