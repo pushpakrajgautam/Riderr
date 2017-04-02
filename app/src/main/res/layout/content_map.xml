@@ -11,19 +11,36 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent" >
         <fragment
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:name="io.github.maniknarang.riderr.MapFragment"
             android:id="@+id/map_fragment"/>
 
-        <fragment
-            android:id="@+id/place_autocomplete_fragment"
+        <android.support.v7.widget.CardView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:card_view="http://schemas.android.com/tools"
+            android:id="@+id/cardview"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="32dp"
-            android:layout_marginLeft="32dp"
-            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment" />
+            android:layout_height="38.5dp"
+            android:elevation="20dp"
+            card_view:cardBackgroundColor="@color/transparent"
+            card_view:cardCornerRadius="16dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="55dp"
+            android:layout_marginTop="11.8dp"
+            >
+
+            <fragment
+                android:id="@+id/place_autocomplete_fragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginRight="32dp"
+                android:layout_marginLeft="32dp"
+                android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment" />
+
+        </android.support.v7.widget.CardView>
     </FrameLayout>
+
 </RelativeLayout>
