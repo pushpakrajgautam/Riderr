@@ -80,10 +80,6 @@ public class ResultActivity extends AppCompatActivity
         origin2 = intent.getDoubleExtra("origin2",0.00);
         dest1 = intent.getDoubleExtra("dest1",0.00);
         dest2 = intent.getDoubleExtra("dest2",0.00);
-    }
-
-    public void requested(View v)
-    {
         SessionConfiguration config = new SessionConfiguration.Builder()
                 // mandatory
                 .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
@@ -97,6 +93,10 @@ public class ResultActivity extends AppCompatActivity
                 .setEnvironment(SessionConfiguration.Environment.SANDBOX)
                 .build();
         UberSdk.initialize(config);
+    }
+
+    public void requested(View v)
+    {
         LoginCallback loginCallback = new LoginCallback() {
             @Override
             public void onLoginCancel() {
