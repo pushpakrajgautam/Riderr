@@ -4,7 +4,7 @@
     <item
         android:id="@+id/action_compare"
         android:orderInCategory="200"
-        android:title="Compare"
+        android:title="Watch"
         android:icon="@drawable/side_nav_bar"
         app:showAsAction="never" />
 </menu>

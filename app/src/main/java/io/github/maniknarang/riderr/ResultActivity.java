@@ -6,6 +6,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
@@ -62,6 +64,7 @@ public class ResultActivity extends AppCompatActivity
     private TextView destText;
     private LoginManager loginManager;
     private double origin1,origin2,dest1,dest2;
+    private boolean compared = false;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -153,8 +156,24 @@ public class ResultActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_compare:
-                Intent intent = new Intent(this,CompareActivity.class);
-                startActivity(intent);
+                if(!compared) {
+                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                    // Replace the contents of the container with the new fragment
+                    ft.replace(R.id.graph_frag, new CompareFragment(),"MINE");
+                    // or ft.add(R.id.your_placeholder, new FooFragment());
+                    // Complete the changes added above
+                    ft.commit();
+                    compared = true;
+                    item.setTitle("Unwatch");
+                }
+                else
+                {
+                    Fragment fragment = getSupportFragmentManager().findFragmentByTag("MINE");
+                    if(fragment!=null)
+                        getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+                    compared=false;
+                    item.setTitle("Watch");
+                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
