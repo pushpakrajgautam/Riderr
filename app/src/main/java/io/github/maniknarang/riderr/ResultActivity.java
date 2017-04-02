@@ -1,11 +1,9 @@
 package io.github.maniknarang.riderr;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
@@ -17,30 +15,21 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.uber.sdk.android.core.UberSdk;
 import com.uber.sdk.android.core.auth.AccessTokenManager;
 import com.uber.sdk.android.core.auth.AuthenticationError;
 import com.uber.sdk.android.core.auth.LoginCallback;
 import com.uber.sdk.android.core.auth.LoginManager;
 import com.uber.sdk.android.rides.RideParameters;
-import com.uber.sdk.android.rides.RideRequestActivityBehavior;
 import com.uber.sdk.android.rides.RideRequestButton;
-import com.uber.sdk.android.rides.RideRequestButtonCallback;
 import com.uber.sdk.core.auth.AccessToken;
 import com.uber.sdk.core.auth.Scope;
-import com.uber.sdk.rides.client.ServerTokenSession;
 import com.uber.sdk.rides.client.SessionConfiguration;
-import com.uber.sdk.rides.client.error.ApiError;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,8 +39,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 
 public class ResultActivity extends AppCompatActivity
 {
@@ -118,13 +105,18 @@ public class ResultActivity extends AppCompatActivity
 
             }
         };
+
+        Intent intent = new Intent();
+        dest1 = intent.getDoubleExtra("dest1",0.00);
+        dest2 = intent.getDoubleExtra("dest2",0.00);
+
         AccessTokenManager accessTokenManager = new AccessTokenManager(this);
         loginManager = new LoginManager(accessTokenManager, loginCallback);
         loginManager.login(this);
         RideRequestButton rideRequestButton = (RideRequestButton) findViewById(R.id.request_buttona);
         RideParameters rideParams = new RideParameters.Builder()
                 .setPickupLocation(origin1, origin2, null, originAdd)
-                .setDropoffLocation(dest1,dest2,null,destAdd)
+                .setDropoffLocation(dest1, dest2, null, destAdd)
                 .build();
         rideRequestButton.setRideParameters(rideParams);
     }
@@ -153,7 +145,7 @@ public class ResultActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_compare:
-                Intent intent = new Intent(this,CompareActivity.class);
+                Intent intent = new Intent(this, CompareActivity.class);
                 startActivity(intent);
                 return true;
         }
