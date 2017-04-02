@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
@@ -67,6 +66,7 @@ public class ResultActivity extends AppCompatActivity
         setContentView(R.layout.result_viw);
         Intent intent = getIntent();
         String url = intent.getStringExtra("JsonUrl");
+        final String urla=url;
         DownloadTask downloadTask = new DownloadTask();
         String url2 = url + "&mode=walking";
         String url3 = url + "&mode=bicycling";
@@ -94,8 +94,10 @@ public class ResultActivity extends AppCompatActivity
 
                     Log.v("my","name");
                     Intent intent = getIntent();
+                    intent.putExtra("JsonUrl",urla);
                     finish();
-                    Toast.makeText(ResultActivity.this,"Refreshed for better data",Toast.LENGTH_LONG).show();
+                    Toast.makeText(ResultActivity.this,"Refreshed for better data",
+                            Toast.LENGTH_SHORT).show();
                     startActivity(intent);
 
                 }
