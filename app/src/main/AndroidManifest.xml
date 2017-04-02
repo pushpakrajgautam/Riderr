@@ -30,11 +30,19 @@
         </activity>
 
         <activity android:name=".ResultActivity"
-            android:parentActivityName=".MapActivity">
+            android:parentActivityName=".MapActivity"
+            android:launchMode="singleTop">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MapActivity" />
 
+        </activity>
+
+        <activity android:name=".CompareActivity"
+            android:parentActivityName=".ResultActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ResultActivity"/>
         </activity>
 
         <meta-data

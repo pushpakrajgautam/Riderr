@@ -135,6 +135,8 @@ public class ResultActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_compare:
+                Intent intent = new Intent(this,CompareActivity.class);
+                startActivity(intent);
                 return true;
         }
         return super.onOptionsItemSelected(item);

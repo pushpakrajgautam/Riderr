@@ -25,6 +25,5 @@
             android:layout_marginRight="32dp"
             android:layout_marginLeft="32dp"
             android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment" />
-
     </FrameLayout>
 </RelativeLayout>
