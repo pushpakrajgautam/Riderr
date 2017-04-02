@@ -12,7 +12,7 @@ We used Google Location Services API to access the users location. A server aggr
 #
 ![alt tag](https://s23.postimg.org/ct0vlw4bf/Untitled1.png)
 #
-![alt tag](https://s24.postimg.org/wyosxauhh/Untitled2.png)
+![alt tag](https://s15.postimg.org/ny393sgnv/Screenshot_2017-04-02_07.01.15.png)
 
 ## Challenges we ran into
 Fixing over 10 crashes in the app and countably infinite memory leaks to make the app stable for proper daily use.
