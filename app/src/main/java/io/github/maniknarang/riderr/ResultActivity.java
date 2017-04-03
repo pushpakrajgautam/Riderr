@@ -79,36 +79,6 @@ public class ResultActivity extends AppCompatActivity
         dest1 = intent.getDoubleExtra("dest1",0.00);
         dest2 = intent.getDoubleExtra("dest2",0.00);
 
-        final Calendar a = Calendar.getInstance();
-
-        h=new Handler(Looper.getMainLooper());
-        r = new Runnable() {
-
-            public void run() {
-
-                //current time
-                Calendar c = Calendar.getInstance();
-
-                if(c.get(Calendar.MINUTE) - a.get(Calendar.MINUTE) >=5)
-                {
-
-                    Log.v("my","name");
-                    Intent intent = getIntent();
-                    intent.putExtra("JsonUrl",urla);
-                    Toast.makeText(ResultActivity.this,"Refreshed for better data",
-                            Toast.LENGTH_SHORT).show();
-                    finish();
-                    startActivity(intent);
-                }
-
-
-                h.postDelayed(this, delayMillis);
-
-            }
-        };
-
-        h.post(r);
-
         SessionConfiguration config = new SessionConfiguration.Builder()
                 // mandatory
                 .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
