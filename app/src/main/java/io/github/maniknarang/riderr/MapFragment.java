@@ -44,8 +44,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
@@ -63,6 +61,44 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     private String url;
 
     @Override
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        markerPoints = new ArrayList<LatLng>();
+        if (ContextCompat.checkSelfPermission(getActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(getContext(),
+                        android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED)
+        {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION))
+            {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+            else
+            {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+        }
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
+    {
+        super.onViewCreated(view, savedInstanceState);
+        setHasOptionsMenu(true);
+        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
+                .addConnectionCallbacks( this )
+                .addOnConnectionFailedListener( this )
+                .addApi( LocationServices.API )
+                .build();
+        initListeners();
+    }
+
+    @Override
     public void onStart()
     {
         super.onStart();
@@ -75,40 +111,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         super.onStop();
         if(mGoogleApiClient != null && mGoogleApiClient.isConnected())
             mGoogleApiClient.disconnect();
-    }
-
-    public void onConnected(Bundle bundle)
-    {
-        mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-
-        if(mCurrentLocation == null) {
-            if (mLocationRequest == null) {
-                LocationAlertDialog(getActivity());
-
-                mLocationRequest = LocationRequest.create();
-            }
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
-                    mLocationRequest, this);
-        }
-        else {
-            handleLocation(mCurrentLocation);
-            initCamera(mCurrentLocation);
-        }
-    }
-
-    private void initCamera(Location mCurrentLocation)
-    {
-        CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
-                                        mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
-        getMap().animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
-        getMap().setMapType( MAP_TYPES[curMapTypeIndex] );
-        getMap().setTrafficEnabled( true );
-        getMap().setMyLocationEnabled( true );
-    }
-
-    private void handleLocation(Location mCurrentLocation)
-    {
-
     }
 
     @Override
@@ -144,102 +146,14 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             if (markerPoints.size() >= 2) {
                 LatLng dest = markerPoints.get(1);
                 url = getDirectionsUrl(origin, dest);
-                DownloadTask downloadTask = new DownloadTask();
-                downloadTask.execute(url);
+                mapped=true;
+                Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
             }
-    }
-
-    private String getDirectionsUrl(LatLng origin, LatLng dest)
-    {
-        // Origin of route
-        String str_origin = "&origin="+origin.latitude+","+origin.longitude;
-
-        // Destination of route
-        String str_dest = "destination="+dest.latitude+","+dest.longitude;
-
-        // Sensor enabled
-        String sensor = "sensor=false";
-
-        // Building the parameters to the web service
-        String parameters = str_origin+"&"+str_dest+"&"+sensor;
-
-        // Output format
-        String output = "json";
-
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+
-                "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
-
-        return url;
-    }
-
-    private String downloadUrl(String strUrl) throws IOException
-    {
-        String data = "";
-        InputStream iStream = null;
-        HttpURLConnection urlConnection = null;
-        try{
-            URL url = new URL(strUrl);
-
-            // Creating an http connection to communicate with url
-            urlConnection = (HttpURLConnection) url.openConnection();
-
-            // Connecting to url
-            urlConnection.connect();
-
-            // Reading data from url
-            iStream = urlConnection.getInputStream();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
-
-            StringBuffer sb = new StringBuffer();
-
-            String line = "";
-            while( ( line = br.readLine()) != null){
-                sb.append(line);
-            }
-
-            data = sb.toString();
-
-            br.close();
-
-        }catch(Exception e)
-        {
-        }
-        finally{
-            iStream.close();
-            urlConnection.disconnect();
-        }
-        return data;
-    }
-
-    private String getAddressFromLatLng( LatLng latLng )
-    {
-        Geocoder geocoder = new Geocoder( getActivity() );
-
-        String address = "";
-        try
-        {
-            address = geocoder
-                    .getFromLocation( latLng.latitude, latLng.longitude, 1 )
-                    .get( 0 ).getAddressLine( 0 );
-        }
-        catch (IOException e )
-        {
-        }
-
-        return address;
     }
 
     @Override
     public void onMapLongClick(LatLng latLng)
     {
-        /*MarkerOptions options = new MarkerOptions().position( latLng );
-        options.title( getAddressFromLatLng( latLng ) );
-
-        options.icon( BitmapDescriptorFactory.defaultMarker() );
-
-        getMap().addMarker( options );*/
         if(mapped)
         {
             mapped=false;
@@ -257,86 +171,9 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
-    {
-        super.onViewCreated(view, savedInstanceState);
-        setHasOptionsMenu(true);
-        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
-                .addConnectionCallbacks( this )
-                .addOnConnectionFailedListener( this )
-                .addApi( LocationServices.API )
-                .build();
-        initListeners();
-    }
-
-    private void initListeners()
-    {
-        getMap().setOnMarkerClickListener(this);
-        getMap().setOnMapLongClickListener(this);
-        getMap().setOnInfoWindowClickListener( this );
-        getMap().setOnMarkerDragListener(this);
-        getMap().setOnMapClickListener(this);
-        getMap().setMyLocationEnabled(true);
-    }
-
-    @Override
     public void onLocationChanged(Location location)
     {
         mCurrentLocation=location;
-        handleLocation(location);
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
-        super.onCreate(savedInstanceState);
-        markerPoints = new ArrayList<LatLng>();
-        if (ContextCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(getContext(),
-                        android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED)
-        {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION))
-            {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
-            else
-            {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode)
-        {
-            case 101:
-            {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    mLocationRequest = LocationRequest.create()
-                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                            .setInterval(10 * 1000)
-                            .setFastestInterval(1 * 1000);
-
-                }
-                else
-                {
-
-                }
-                return;
-            }
-        }
     }
 
     @Override
@@ -367,121 +204,54 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         {
             LatLng dest = markerPoints.get(1);
             String url = getDirectionsUrl(origin, dest);
-            DownloadTask downloadTask = new DownloadTask();
-            downloadTask.execute(url);
+            mapped=true;
+            Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
         }
     }
 
-    private class DownloadTask extends AsyncTask<String, Void, String>
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults)
     {
-        @Override
-        protected String doInBackground(String... url)
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode)
         {
-            // For storing data from web service
-            String data = "";
-
-            try
+            case 101:
             {
-                // Fetching the data from web service
-                data = downloadUrl(url[0]);
-            }
-            catch(Exception e)
-            {
-                Log.d("Background Task",e.toString());
-            }
-            return data;
-        }
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                {
 
-        @Override
-        protected void onPostExecute(String s)
-        {
-            super.onPostExecute(s);
-            ParserTask parserTask = new ParserTask();
+                    mLocationRequest = LocationRequest.create()
+                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                            .setInterval(10 * 1000)
+                            .setFastestInterval(1 * 1000);
 
-            // Invokes the thread for parsing the JSON data
-            parserTask.execute(s);
-        }
-    }
-
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >
-    {
-
-        @Override
-        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
-            JSONObject jObject;
-            List<List<HashMap<String, String>>> routes = null;
-
-            try {
-                jObject = new JSONObject(jsonData[0]);
-                DirectionParser parser = new DirectionParser();
-
-                // Starts parsing data
-                routes = parser.parse(jObject);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return routes;
-        }
-
-        @Override
-        protected void onPostExecute(List<List<HashMap<String, String>>> lists)
-        {
-            super.onPostExecute(lists);
-            ArrayList<LatLng> points = null;
-            PolylineOptions lineOptions = null;
-            MarkerOptions markerOptions = new MarkerOptions();
-
-            // Traversing through all the routes
-            // Prevent crashing if not connected to the internet
-            if (lists != null) {
-                for (int i = 0; i < lists.size(); i++) {
-                    points = new ArrayList<LatLng>();
-                    lineOptions = new PolylineOptions();
-
-                    // Fetching i-th route
-                    List<HashMap<String, String>> path = lists.get(i);
-
-                    // Fetching all the points in i-th route
-                    for (int j = 0; j < path.size(); j++) {
-                        HashMap<String, String> point = path.get(j);
-
-                        double lat = Double.parseDouble(point.get("lat"));
-                        double lng = Double.parseDouble(point.get("lng"));
-                        LatLng position = new LatLng(lat, lng);
-
-                        points.add(position);
-                    }
-
-                    // Adding all the points in the route to LineOptions
-                    lineOptions.addAll(points);
-                    lineOptions.width(10);
-                    lineOptions.color(Color.RED);
                 }
-            }
+                else
+                {
 
-            // Check for PolylineOptions. This cannot be null
-            if (lineOptions != null) {
-                // Drawing polyline in the Google Map for the i-th route
-                getMap().addPolyline(lineOptions);
+                }
+                return;
             }
-
-            Toast.makeText(getContext(),"Long Tap to see routes!",Toast.LENGTH_LONG).show();
-            mapped = true;
         }
     }
 
-    public void LocationAlertDialog(final Context context) {
+    public void locationAlertDialog(final Context context)
+    {
 
         AlertDialog.Builder d = new AlertDialog.Builder(context);
         d.setTitle("No Providers");
         d.setCancelable(false);
         d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
 
-        d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener() {
+        d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener()
+        {
 
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
+            public void onClick(DialogInterface dialog, int which)
+            {
                 Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                 startActivityForResult(i, 0);
             }
@@ -489,5 +259,106 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         AlertDialog dialog = d.create();
         dialog.show();
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
+    }
+
+    public void onConnected(Bundle bundle)
+    {
+        try
+        {
+            mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        }
+        catch(SecurityException e)
+        {
+
+        }
+        if(mCurrentLocation == null)
+        {
+            if (mLocationRequest == null)
+            {
+                locationAlertDialog(getActivity());
+                mLocationRequest = LocationRequest.create();
+            }
+            try
+            {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                        mLocationRequest, this);
+            }
+            catch(SecurityException e)
+            {
+
+            }
+        }
+        else
+        {
+            initCamera(mCurrentLocation);
+        }
+    }
+
+    private void initCamera(Location mCurrentLocation)
+    {
+        CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
+                mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
+        getMap().animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
+        getMap().setMapType( MAP_TYPES[curMapTypeIndex] );
+        getMap().setTrafficEnabled( true );
+    }
+
+    private void initListeners()
+    {
+        getMap().setOnMarkerClickListener(this);
+        getMap().setOnMapLongClickListener(this);
+        getMap().setOnInfoWindowClickListener( this );
+        getMap().setOnMarkerDragListener(this);
+        getMap().setOnMapClickListener(this);
+        try
+        {
+            getMap().setMyLocationEnabled(true);
+        }
+        catch (SecurityException e)
+        {
+
+        }
+    }
+
+    private String getAddressFromLatLng( LatLng latLng )
+    {
+        Geocoder geocoder = new Geocoder( getActivity() );
+
+        String address = "";
+        try
+        {
+            address = geocoder
+                    .getFromLocation( latLng.latitude, latLng.longitude, 1 )
+                    .get( 0 ).getAddressLine( 0 );
+        }
+        catch (IOException e )
+        {
+        }
+
+        return address;
+    }
+
+    private String getDirectionsUrl(LatLng origin, LatLng dest)
+    {
+        // Origin of route
+        String str_origin = "&origin="+origin.latitude+","+origin.longitude;
+
+        // Destination of route
+        String str_dest = "destination="+dest.latitude+","+dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+
+        // Building the parameters to the web service
+        String parameters = str_origin+"&"+str_dest+"&"+sensor;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+
+                "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+
+        return url;
     }
 }

@@ -6,8 +6,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -27,6 +30,8 @@ import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.IOException;
+
 import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
 
 public class MapActivity extends AppCompatActivity
@@ -40,14 +45,18 @@ public class MapActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        if (!Utility.isOnline()) {
+        if (!isOnline())
+        {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
             alertDialog.setTitle("Exiting");
             alertDialog.setMessage("No internet connection");
             alertDialog.setCancelable(false);
-            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int which) {
-                    finish();
+            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
+            {
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    Intent i = new Intent(Settings.ACTION_WIFI_SETTINGS);
+                    startActivityForResult(i, 0);
                 }
             });
             AlertDialog dialog = alertDialog.create();
@@ -67,27 +76,10 @@ public class MapActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED)
-        {
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION))
-            {
-            }
-            else
-            {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
-        }
         autocompleteFragment = (PlaceAutocompleteFragment)
                 getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
+        {
             @Override
             public void onPlaceSelected(Place place)
             {
@@ -170,7 +162,7 @@ public class MapActivity extends AppCompatActivity
         if (id == R.id.nav_menu)
         {
             Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
-                    "mailto","narang_manik@rocketmail.com", null));
+                    "mailto","p1gautam@ucsd.edu", null));
             emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Riderr");
             startActivity(Intent.createChooser(emailIntent, "Send Email..."));
         }
@@ -182,35 +174,25 @@ public class MapActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode)
-        {
-            case 101:
-            {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    mLocationRequest = LocationRequest.create()
-                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                            .setInterval(10 * 1000)
-                            .setFastestInterval(1 * 1000);
-
-                }
-                else
-                {
-
-                }
-                return;
-            }
-        }
-    }
-
-    @Override
-    protected void onStop() {
+    protected void onStop()
+    {
         super.onStop();
         autocompleteFragment.setText("");
+    }
+
+    public boolean isOnline()
+    {
+        boolean connected = false;
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)
+        {
+            connected = true;
+        }
+        else
+            connected = false;
+
+        return connected;
     }
 
 }

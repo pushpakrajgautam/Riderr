@@ -59,6 +59,7 @@ public class ResultActivity extends AppCompatActivity
     private final long delayMillis=1000;
     private Handler h=null;
     private Runnable r;
+    public String urla;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -66,7 +67,7 @@ public class ResultActivity extends AppCompatActivity
         setContentView(R.layout.result_viw);
         Intent intent = getIntent();
         String url = intent.getStringExtra("JsonUrl");
-        final String urla=url;
+        urla=url;
         DownloadTask downloadTask = new DownloadTask();
         String url2 = url + "&mode=walking";
         String url3 = url + "&mode=bicycling";
@@ -80,15 +81,10 @@ public class ResultActivity extends AppCompatActivity
         dest2 = intent.getDoubleExtra("dest2",0.00);
 
         SessionConfiguration config = new SessionConfiguration.Builder()
-                // mandatory
                 .setClientId("gEH7g1vD2lJxewUaOK_Us_g4WisxM3iK")
-                // required for enhanced button features
                 .setServerToken("4E4HmWduJNBOCa-au7mfTkRof-MVBfPf-giQqNCu")
-                // required for implicit grant authentication
                 .setRedirectUri("gEH7g1vD2lJxewUaOKUsg4WisxM3iK://uberConnect")
-                // required scope for Ride Request Widget features
                 .setScopes(Arrays.asList(Scope.RIDE_WIDGETS))
-                // optional: set Sandbox as operating environment
                 .setEnvironment(SessionConfiguration.Environment.SANDBOX)
                 .build();
         UberSdk.initialize(config);
@@ -96,26 +92,19 @@ public class ResultActivity extends AppCompatActivity
 
     public void requested(View v)
     {
-        LoginCallback loginCallback = new LoginCallback() {
+        LoginCallback loginCallback = new LoginCallback()
+        {
             @Override
-            public void onLoginCancel() {
-                // User canceled login
-            }
+            public void onLoginCancel() {}
 
             @Override
-            public void onLoginError(@NonNull AuthenticationError error) {
-                // Error occurred during login
-            }
+            public void onLoginError(@NonNull AuthenticationError error) {}
 
             @Override
-            public void onLoginSuccess(@NonNull AccessToken accessToken) {
-                // Successful login!  The AccessToken will have already been saved.
-            }
+            public void onLoginSuccess(@NonNull AccessToken accessToken) {}
 
             @Override
-            public void onAuthorizationCodeReceived(@NonNull String authorizationCode) {
-
-            }
+            public void onAuthorizationCodeReceived(@NonNull String authorizationCode) {}
         };
 
         Intent intent = new Intent();
@@ -138,43 +127,21 @@ public class ResultActivity extends AppCompatActivity
     {
         switch (item.getItemId())
         {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 Intent upIntent = NavUtils.getParentActivityIntent(this);
-                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-                    // This activity is NOT part of this app's task, so create a new task
-                    // when navigating up, with a synthesized back stack.
+                if (NavUtils.shouldUpRecreateTask(this, upIntent))
+                {
                     TaskStackBuilder.create(this)
-                            // Add all of this activity's parents to the back stack
                             .addNextIntentWithParentStack(upIntent)
-                            // Navigate up to the closest parent
                             .startActivities();
-                } else {
-                    // This activity is part of this app's task, so simply
-                    // navigate up to the logical parent activity.
+                }
+                else
+                {
                     NavUtils.navigateUpTo(this, upIntent);
                 }
                 return true;
 
             case R.id.action_compare:
-                if(!compared) {
-                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                    // Replace the contents of the container with the new fragment
-                    ft.replace(R.id.graph_frag, new CompareFragment(),"MINE");
-                    // or ft.add(R.id.your_placeholder, new FooFragment());
-                    // Complete the changes added above
-                    ft.commit();
-                    compared = true;
-                    item.setTitle("Unwatch");
-                }
-                else
-                {
-                    Fragment fragment = getSupportFragmentManager().findFragmentByTag("MINE");
-                    if(fragment!=null)
-                        getSupportFragmentManager().beginTransaction().remove(fragment).commit();
-                    compared=false;
-                    item.setTitle("Watch");
-                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -193,14 +160,12 @@ public class ResultActivity extends AppCompatActivity
         @Override
         protected String[] doInBackground(String... url)
         {
-            // For storing data from web service
             String data1 = "";
             String data2 = "";
             String data3 = "";
 
             try
             {
-                // Fetching the data from web service
                 data1 = downloadUrl(url[0]);
                 data2 = downloadUrl(url[1]);
                 data3 = downloadUrl(url[2]);
@@ -217,8 +182,6 @@ public class ResultActivity extends AppCompatActivity
         {
             super.onPostExecute(s);
             ParserTask parserTask = new ParserTask();
-
-            // Invokes the thread for parsing the JSON data
             parserTask.execute(s);
         }
     }
@@ -246,16 +209,36 @@ public class ResultActivity extends AppCompatActivity
                         for (int j = 0; j < legs.length(); j++) {
                             String travelDur = legs.getJSONObject(j).getJSONObject("duration").getString("text");
                             String travelDist = legs.getJSONObject(j).getJSONObject("distance").getString("text");
-                            String travelMode = legs.getJSONObject(j).getJSONArray("steps").getJSONObject(0).getString("travel_mode");
+                            String travelMode = legs.getJSONObject(j).getJSONArray("steps").getJSONObject(0)
+                                                .getString("travel_mode");
                             Result res = new Result(travelMode, travelDist, travelDur, travelCurr);
                             resultArrayList.add(res);
                         }
                     }
                 }
-                originAdd = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getString("start_address");
-                destAdd = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getString("end_address");
+
+                jObject = new JSONObject(jsonData[0]);
+                JSONArray geoPoints = jObject.getJSONArray("geocoded_waypoints");
+                String placeId1 = geoPoints.getJSONObject(0).getString("place_id");
+                String placeId2 = geoPoints.getJSONObject(geoPoints.length()-1).getString("place_id");
+
+                String url = "https://maps.googleapis.com/maps/api/place/details/json?placeid="+placeId1+
+                        "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                String place1Data = downloadUrl(url);
+                url = "https://maps.googleapis.com/maps/api/place/details/json?placeid="+placeId2+
+                        "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                String place2Data = downloadUrl(url);
+
+                JSONObject jPlace1 = new JSONObject(place1Data);
+                JSONObject jPlace2 = new JSONObject(place2Data);
+
+                originAdd = jPlace1.getJSONObject("result").getString("formatted_address");
+                destAdd = jPlace2.getJSONObject("result").getString("formatted_address");
             }
             catch (JSONException e)
+            {
+                e.printStackTrace();
+            } catch (IOException e)
             {
                 e.printStackTrace();
             }
@@ -282,8 +265,6 @@ public class ResultActivity extends AppCompatActivity
                     }
                 });
             }
-            Log.v("hey",originAdd);
-            Log.v("hey",destAdd);
             originText.setText(originAdd);
             destText.setText(destAdd);
         }
@@ -294,16 +275,11 @@ public class ResultActivity extends AppCompatActivity
         String data = "";
         InputStream iStream = null;
         HttpURLConnection urlConnection = null;
-        try{
+        try
+        {
             URL url = new URL(strUrl);
-
-            // Creating an http connection to communicate with url
             urlConnection = (HttpURLConnection) url.openConnection();
-
-            // Connecting to url
             urlConnection.connect();
-
-            // Reading data from url
             iStream = urlConnection.getInputStream();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
@@ -311,7 +287,8 @@ public class ResultActivity extends AppCompatActivity
             StringBuffer sb = new StringBuffer();
 
             String line = "";
-            while( ( line = br.readLine()) != null){
+            while( ( line = br.readLine()) != null)
+            {
                 sb.append(line);
             }
 
@@ -319,7 +296,8 @@ public class ResultActivity extends AppCompatActivity
 
             br.close();
 
-        }catch(Exception e)
+        }
+        catch(Exception e)
         {
         }
         finally{
@@ -330,7 +308,8 @@ public class ResultActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onActivityResult(requestCode, resultCode, data);
         loginManager.onActivityResult(this, requestCode, resultCode, data);
     }
