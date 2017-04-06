@@ -1,6 +1,7 @@
 package io.github.maniknarang.riderr;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
@@ -19,10 +20,20 @@ import com.stripe.android.model.Card;
 import com.stripe.android.model.Token;
 import com.stripe.android.view.CardInputWidget;
 
-import static java.security.AccessController.getContext;
+import java.io.IOException;
+
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class PayActivity extends AppCompatActivity
 {
+    public static final MediaType JSON
+            = MediaType.parse("application/json; charset=utf-8");
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState)
     {
@@ -40,27 +51,22 @@ public class PayActivity extends AppCompatActivity
                 Card cardToSave = mCardInputWidget.getCard();
                 if (cardToSave == null)
                 {
-                    Log.v("hello","authenpo");
                 }
                 else
                 {
-                    Log.v("hello","authen");
                     Stripe stripe = null;
                     try
                     {
-                        Log.v("hello","authena");
                         stripe = new Stripe(getApplicationContext(), "pk_live_cGagGttUkWDTnMCMgOYzfZbe");
                     }
                     catch (AuthenticationException e)
                     {
-                        Log.v("hello","authenticationerror");
                     }
                     stripe.createToken(cardToSave, new TokenCallback()
                         {
                             public void onSuccess(Token token)
                             {
-                                Log.v("hello","authenui");
-                                // Send token to your server
+                                new NetworkTask().execute(token);
                             }
                             public void onError(Exception error)
                             {
@@ -94,5 +100,30 @@ public class PayActivity extends AppCompatActivity
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private class NetworkTask extends AsyncTask<Token,Void,Void>
+    {
+        @Override
+        protected Void doInBackground(Token... tokens)
+        {
+            OkHttpClient client = new OkHttpClient();
+            //String json ="{'stripeToken':'" + tokens[0].getId() + "'" + "}";
+            RequestBody body = new FormBody.Builder().add("stripeToken",tokens[0].getId()).build();
+            Request request = new Request.Builder()
+                    .url("http://prgzz.eastus.cloudapp.azure.com/info.php")
+                    .post(body)
+                    .build();
+            Response response = null;
+            try
+            {
+                response = client.newCall(request).execute();
+                Log.v("Response:",response.toString());
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 }

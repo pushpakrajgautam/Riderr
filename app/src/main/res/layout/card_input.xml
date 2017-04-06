@@ -8,7 +8,7 @@
 
     <com.stripe.android.view.CardInputWidget
         android:id="@+id/card_input_widget"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         stripe:cardTint="@android:color/holo_purple"
         stripe:cardTextErrorColor="@android:color/holo_orange_dark"
