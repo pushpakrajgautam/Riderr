@@ -16,11 +16,41 @@
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
+        android:layout_width="320dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_map"
-        app:menu="@menu/activity_map_drawer" />
+        android:gravity="bottom"
+        android:paddingTop="64dp"
+        android:background="@drawable/side_nav_bar">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:id="@+id/riderr_head_nav"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Riderr"
+                android:textColor="#FFF"
+                android:textSize="54sp"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1.5dp"
+                android:layout_marginTop="16dp"
+                android:background="#263238"
+                android:layout_marginBottom="16dp"/>
+
+            <ListView
+                android:id="@+id/lv_menu_items"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+        </android.support.design.widget.NavigationView>
 
 </android.support.v4.widget.DrawerLayout>

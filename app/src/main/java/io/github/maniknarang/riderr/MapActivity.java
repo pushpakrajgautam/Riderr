@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -27,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
@@ -43,6 +45,7 @@ import com.varunest.sparkbutton.SparkButtonBuilder;
 import com.varunest.sparkbutton.SparkEventListener;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
 
@@ -58,6 +61,10 @@ public class MapActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        Typeface font = Typeface.createFromAsset(getAssets(),"Lindbergh_Baby.ttf");
+        TextView riderrHead = (TextView) findViewById(R.id.riderr_head_nav);
+        riderrHead.setTypeface(font);
 
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
         if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
@@ -171,11 +178,14 @@ public class MapActivity extends AppCompatActivity
             @Override
             public void onEvent(ImageView button, boolean buttonState)
             {
-                double lat = googleMap.getMyLocation().getLatitude();
-                double lon = googleMap.getMyLocation().getLongitude();
-                LatLng latLng = new LatLng(lat,lon);
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(latLng);
-                googleMap.animateCamera(cameraUpdate);
+                if(googleMap.getMyLocation() != null)
+                {
+                    double lat = googleMap.getMyLocation().getLatitude();
+                    double lon = googleMap.getMyLocation().getLongitude();
+                    LatLng latLng = new LatLng(lat, lon);
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,16);
+                    googleMap.animateCamera(cameraUpdate);
+                }
             }
 
             @Override

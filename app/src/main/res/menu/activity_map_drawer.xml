@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <group android:checkableBehavior="single"
+        android:id="@+id/nav_head_group">
+        <item
+            android:id="@+id/nav_head"
+            android:title="Riderr" />
+    </group>
+
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_menu"
