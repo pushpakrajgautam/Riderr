@@ -17,7 +17,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -25,6 +28,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -34,6 +38,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.varunest.sparkbutton.SparkButton;
+import com.varunest.sparkbutton.SparkEventListener;
 
 import org.json.JSONObject;
 
@@ -300,7 +306,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
         getMap().animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
         getMap().setMapType( MAP_TYPES[curMapTypeIndex] );
-        getMap().setTrafficEnabled( true );
     }
 
     private void initListeners()
@@ -310,6 +315,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         getMap().setOnInfoWindowClickListener( this );
         getMap().setOnMarkerDragListener(this);
         getMap().setOnMapClickListener(this);
+        getMap().getUiSettings().setMyLocationButtonEnabled(false);
         try
         {
             getMap().setMyLocationEnabled(true);

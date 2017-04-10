@@ -14,38 +14,54 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.varunest.sparkbutton.SparkButton;
+import com.varunest.sparkbutton.SparkButtonBuilder;
+import com.varunest.sparkbutton.SparkEventListener;
 
 import java.io.IOException;
 
 import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
 
 public class MapActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback
+        implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback,
+        OnMapReadyCallback
 {
-    private PlaceAutocompleteFragment autocompleteFragment;
+    private DrawerLayout drawer;
     public static LocationRequest mLocationRequest;
+    private SparkButton loc_button;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
-        if (!isOnline())
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
+        if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED))
         {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
             alertDialog.setTitle("Exiting");
@@ -64,96 +80,65 @@ public class MapActivity extends AppCompatActivity
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
         }
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
-
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        autocompleteFragment = (PlaceAutocompleteFragment)
-                getFragmentManager().findFragmentById(R.id.place_autocomplete_fragment);
-        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener()
-        {
+
+        MapFragment mapFragment = (MapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_fragment);
+        mapFragment.getMapAsync(this);
+
+        loc_button = (SparkButton) findViewById(R.id.spark_loc);
+
+        SparkButton button  = (SparkButton) findViewById(R.id.spark_draw);
+        button.setEventListener(new SparkEventListener() {
             @Override
-            public void onPlaceSelected(Place place)
+            public void onEvent(ImageView button, boolean buttonState)
             {
-                LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-                LatLng dest = place.getLatLng();
-                String str_origin = "&origin="+origin.latitude+","+origin.longitude;
+                if(drawer.isDrawerOpen(GravityCompat.START))
+                    drawer.closeDrawer(GravityCompat.START);
+                else
+                    drawer.openDrawer(GravityCompat.START);
 
-                // Destination of route
-                String str_dest = "destination="+dest.latitude+","+dest.longitude;
-
-                // Sensor enabled
-                String sensor = "sensor=false";
-
-                // Building the parameters to the web service
-                String parameters = str_origin+"&"+str_dest+"&"+sensor;
-
-                // Output format
-                String output = "json";
-
-                // Building the url to the web service
-                String url = "https://maps.googleapis.com/maps/api/directions/"+output+"?"+parameters+
-                        "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
-                Intent intent = new Intent(MapActivity.this,ResultActivity.class);
-                intent.putExtra("JsonUrl",url);
-                intent.putExtra("origin1",origin.latitude);
-                intent.putExtra("origin2",origin.longitude);
-                intent.putExtra("dest1",dest.latitude);
-                intent.putExtra("dest2",dest.longitude);
-                startActivity(intent);
             }
 
             @Override
-            public void onError(Status status)
+            public void onEventAnimationEnd(ImageView button, boolean buttonState)
             {
+
+            }
+
+            @Override
+            public void onEventAnimationStart(ImageView button, boolean buttonState)
+            {
+
+            }
+        });
+
+        SparkButton sparkSearch = (SparkButton) findViewById(R.id.spark_search);
+        sparkSearch.setEventListener(new SparkEventListener()
+        {
+            @Override
+            public void onEvent(ImageView button, boolean buttonState)
+            {
+
+            }
+
+            @Override
+            public void onEventAnimationEnd(ImageView button, boolean buttonState)
+            {
+
+            }
+
+            @Override
+            public void onEventAnimationStart(ImageView button, boolean buttonState)
+            {
+
             }
         });
     }
 
-    @Override
-    public void onBackPressed()
-    {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START))
-        {
-            drawer.closeDrawer(GravityCompat.START);
-        } else
-        {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.map, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings)
-        {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item)
     {
@@ -174,25 +159,36 @@ public class MapActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onStop()
+    public void onMapReady(final GoogleMap googleMap)
     {
-        super.onStop();
-        autocompleteFragment.setText("");
-    }
-
-    public boolean isOnline()
-    {
-        boolean connected = false;
-        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
-        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
-                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)
+        try
         {
-            connected = true;
+            googleMap.setMyLocationEnabled(true);
         }
-        else
-            connected = false;
+        catch (SecurityException e) {}
+        loc_button.setEventListener(new SparkEventListener()
+        {
+            @Override
+            public void onEvent(ImageView button, boolean buttonState)
+            {
+                double lat = googleMap.getMyLocation().getLatitude();
+                double lon = googleMap.getMyLocation().getLongitude();
+                LatLng latLng = new LatLng(lat,lon);
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(latLng);
+                googleMap.animateCamera(cameraUpdate);
+            }
 
-        return connected;
+            @Override
+            public void onEventAnimationEnd(ImageView button, boolean buttonState)
+            {
+
+            }
+
+            @Override
+            public void onEventAnimationStart(ImageView button, boolean buttonState)
+            {
+
+            }
+        });
     }
-
 }

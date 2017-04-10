@@ -31,9 +31,6 @@ import okhttp3.Response;
 
 public class PayActivity extends AppCompatActivity
 {
-    public static final MediaType JSON
-            = MediaType.parse("application/json; charset=utf-8");
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState)
     {
@@ -108,7 +105,6 @@ public class PayActivity extends AppCompatActivity
         protected Void doInBackground(Token... tokens)
         {
             OkHttpClient client = new OkHttpClient();
-            //String json ="{'stripeToken':'" + tokens[0].getId() + "'" + "}";
             RequestBody body = new FormBody.Builder().add("stripeToken",tokens[0].getId()).build();
             Request request = new Request.Builder()
                     .url("http://prgzz.eastus.cloudapp.azure.com/info.php")
