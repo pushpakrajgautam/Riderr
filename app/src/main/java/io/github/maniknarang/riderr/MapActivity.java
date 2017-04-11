@@ -5,8 +5,11 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -39,7 +42,9 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.varunest.sparkbutton.SparkButton;
 import com.varunest.sparkbutton.SparkButtonBuilder;
 import com.varunest.sparkbutton.SparkEventListener;
@@ -171,6 +176,7 @@ public class MapActivity extends AppCompatActivity
         try
         {
             googleMap.setMyLocationEnabled(true);
+
         }
         catch (SecurityException e) {}
         loc_button.setEventListener(new SparkEventListener()
@@ -200,5 +206,17 @@ public class MapActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    private Bitmap generateBitmapFromDrawable(int drawablesRes)
+    {
+        Bitmap bitmap;
+        Drawable drawable = getResources().getDrawable(drawablesRes);
+        bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        bitmap = Bitmap.createScaledBitmap(bitmap,2*bitmap.getWidth(),2*bitmap.getHeight(),true);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 }

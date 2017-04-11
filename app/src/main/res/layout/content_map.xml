@@ -12,6 +12,10 @@
 
     <FrameLayout
         android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent" >
         <fragment
             android:layout_width="match_parent"
@@ -74,5 +78,6 @@
             app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
             app:sparkbutton_animationSpeed="1.5"/>
     </FrameLayout>
+</FrameLayout>
 
 </RelativeLayout>

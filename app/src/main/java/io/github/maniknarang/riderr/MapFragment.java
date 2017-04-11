@@ -6,7 +6,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -63,14 +66,13 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     private int curMapTypeIndex = 1;
     private LocationRequest mLocationRequest;
     private boolean mapped = false;
-    private ArrayList<LatLng> markerPoints;
     private String url;
+    private Marker marker;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        markerPoints = new ArrayList<LatLng>();
         if (ContextCompat.checkSelfPermission(getActivity(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
@@ -140,33 +142,40 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onMapClick(LatLng latLng)
     {
-            markerPoints.clear();
-            getMap().clear();
-            LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-            markerPoints.add(origin);
-            markerPoints.add(latLng);
+            //markerPoints.clear();
+            //getMap().clear();
+            //LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+            //markerPoints.add(origin);
+            //markerPoints.add(latLng);
+            if(marker != null)
+                marker.remove();
             MarkerOptions options = new MarkerOptions().position(latLng);
             options.title(getAddressFromLatLng(latLng));
-            options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-            getMap().addMarker(options).setDraggable(true);
-            if (markerPoints.size() >= 2) {
+            options.icon(BitmapDescriptorFactory.fromBitmap(generateBitmapFromDrawable(R.drawable.ic_house)));
+            marker = getMap().addMarker(options);
+            marker.setDraggable(true);
+
+            /*if (markerPoints.size() >= 2) {
                 LatLng dest = markerPoints.get(1);
                 url = getDirectionsUrl(origin, dest);
                 mapped=true;
                 Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
-            }
+            }*/
+        //url=https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=12.972442,77.580643&radius=50000&types=subway_station|bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg
+        // sequence - results(array) - geometry - location - lat lng
+        // dir url = https://maps.googleapis.com/maps/api/directions/json?origin=Magadi+Main+Rd,Bengaluru,Karnataka,India&destination=Majestic,Bengaluru,Karnataka,India&mode=transit&transit_mode=subway&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg
     }
 
     @Override
     public void onMapLongClick(LatLng latLng)
     {
-        if(mapped)
+        /*if(mapped)
         {
             mapped=false;
             Intent intent = new Intent(getActivity(),ResultActivity.class);
             intent.putExtra("JsonUrl",url);
             startActivity(intent);
-        }
+        }*/
     }
 
     @Override
@@ -196,23 +205,24 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onMarkerDragEnd(Marker marker)
     {
-        markerPoints.clear();
+        /*markerPoints.clear();
         getMap().clear();
-        LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-        markerPoints.add(origin);
-        LatLng latLng = marker.getPosition();
-        markerPoints.add(latLng);
-        MarkerOptions options = new MarkerOptions().position(latLng);
-        options.title(getAddressFromLatLng(latLng));
-        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        getMap().addMarker(options).setDraggable(true);
+            LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+            markerPoints.add(origin);
+            LatLng latLng = marker.getPosition();
+            markerPoints.add(latLng);
+            MarkerOptions options = new MarkerOptions().position(latLng);
+            options.title(getAddressFromLatLng(latLng));
+            options.icon(BitmapDescriptorFactory.fromBitmap(generateBitmapFromDrawable(R.drawable.ic_house)));
+            getMap().addMarker(options).setDraggable(true);
         if(markerPoints.size() >= 2)
         {
             LatLng dest = markerPoints.get(1);
             String url = getDirectionsUrl(origin, dest);
             mapped=true;
             Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
-        }
+        }*/
+
     }
 
     @Override
@@ -366,5 +376,17 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 "&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
 
         return url;
+    }
+
+    private Bitmap generateBitmapFromDrawable(int drawablesRes)
+    {
+        Bitmap bitmap;
+        Drawable drawable = getResources().getDrawable(drawablesRes);
+        bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        bitmap = Bitmap.createScaledBitmap(bitmap,2*bitmap.getWidth(),2*bitmap.getHeight(),true);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 }
