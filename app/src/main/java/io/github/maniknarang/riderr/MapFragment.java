@@ -34,16 +34,21 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.stripe.android.model.Token;
 import com.varunest.sparkbutton.SparkButton;
 import com.varunest.sparkbutton.SparkEventListener;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -53,10 +58,21 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener,GoogleMap.OnMarkerDragListener
+        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener,GoogleMap.OnMarkerDragListener,
+        OnMapReadyCallback
 {
     private GoogleApiClient mGoogleApiClient;
     public static Location mCurrentLocation;
@@ -68,6 +84,9 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     private boolean mapped = false;
     private String url;
     private Marker marker;
+    private GoogleMap googleMap;
+    public static final MediaType JSON
+            = MediaType.parse("application/json; charset=utf-8");
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -103,7 +122,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                 .addOnConnectionFailedListener( this )
                 .addApi( LocationServices.API )
                 .build();
-        initListeners();
+        getMapAsync(this);
     }
 
     @Override
@@ -142,28 +161,111 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onMapClick(LatLng latLng)
     {
-            //markerPoints.clear();
-            //getMap().clear();
-            //LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-            //markerPoints.add(origin);
-            //markerPoints.add(latLng);
-            if(marker != null)
-                marker.remove();
-            MarkerOptions options = new MarkerOptions().position(latLng);
-            options.title(getAddressFromLatLng(latLng));
-            options.icon(BitmapDescriptorFactory.fromBitmap(generateBitmapFromDrawable(R.drawable.ic_house)));
-            marker = getMap().addMarker(options);
-            marker.setDraggable(true);
-
-            /*if (markerPoints.size() >= 2) {
-                LatLng dest = markerPoints.get(1);
-                url = getDirectionsUrl(origin, dest);
-                mapped=true;
-                Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
-            }*/
-        //url=https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=12.972442,77.580643&radius=50000&types=subway_station|bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg
+        //markerPoints.clear();
+        //getMap().clear();
+        //LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        //markerPoints.add(origin);
+        //markerPoints.add(latLng);
+        initMarker(latLng);
+        /*if (markerPoints.size() >= 2) {
+            LatLng dest = markerPoints.get(1);
+            url = getDirectionsUrl(origin, dest);
+            mapped=true;
+            Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
+         }*/
         // sequence - results(array) - geometry - location - lat lng
         // dir url = https://maps.googleapis.com/maps/api/directions/json?origin=Magadi+Main+Rd,Bengaluru,Karnataka,India&destination=Majestic,Bengaluru,Karnataka,India&mode=transit&transit_mode=subway&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap)
+    {
+        this.googleMap=googleMap;
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
+        initListeners();
+    }
+
+    private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
+    {
+        @Override
+        protected Void doInBackground(final String... urls)
+        {
+            OkHttpClient client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+                                  .readTimeout(10,TimeUnit.SECONDS).writeTimeout(10,TimeUnit.SECONDS).build();
+            Request request1 = new Request.Builder()
+                    .url(urls[0])
+                    .build();
+            Request request2 = new Request.Builder()
+                    .url(urls[1])
+                    .build();
+            client.newCall(request1).enqueue(new Callback()
+            {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
+                        String responseData = response.body().string();
+                        JSONObject jsonObject = new JSONObject(responseData);
+                        Log.v("1:", responseData);
+                    }
+                    catch (JSONException e){}
+                }
+            });
+
+            client.newCall(request2).enqueue(new Callback()
+            {
+                @Override
+                public void onFailure(Call call, IOException e)
+                {
+                    Log.v("Hey",urls[1]);
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
+                        String responseData = response.body().string();
+                        JSONArray jsonArray = new JSONArray(responseData);
+                        Log.v("2:", responseData);
+                    }
+                    catch (JSONException e)
+                    {
+                        Log.v("Hey","JSON"+e.toString());
+                    }
+                }
+            });
+
+            RequestBody formBody = new FormBody.Builder()
+                    .add("stopID", "2714")
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://bmtcmob.hostg.in/api/itsstopwise/details")
+                    .post(formBody)
+                    .build();
+
+            Response response = null;
+            try
+            {
+                response = client.newCall(request).execute();
+                if(response.isSuccessful())
+                    Log.v("resp:",response.body().string());
+                else
+                    Log.v("err",response.toString());
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 
     @Override
@@ -188,7 +290,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onLocationChanged(Location location)
     {
-        mCurrentLocation=location;
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        initMarker(latLng);
     }
 
     @Override
@@ -223,6 +326,12 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             Toast.makeText(getContext(),"Long tap to view results",Toast.LENGTH_LONG).show();
         }*/
 
+        double lat = marker.getPosition().latitude;
+        double lng = marker.getPosition().longitude;
+        String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
+                "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+        String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
+        new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
 
     @Override
@@ -277,6 +386,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
     }
 
+
+
     public void onConnected(Bundle bundle)
     {
         try
@@ -314,21 +425,23 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     {
         CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
                 mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
-        getMap().animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
-        getMap().setMapType( MAP_TYPES[curMapTypeIndex] );
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
+        googleMap.setMapType( MAP_TYPES[curMapTypeIndex] );
+        LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        initMarker(latLng);
     }
 
     private void initListeners()
     {
-        getMap().setOnMarkerClickListener(this);
-        getMap().setOnMapLongClickListener(this);
-        getMap().setOnInfoWindowClickListener( this );
-        getMap().setOnMarkerDragListener(this);
-        getMap().setOnMapClickListener(this);
-        getMap().getUiSettings().setMyLocationButtonEnabled(false);
+        googleMap.setOnMarkerClickListener(this);
+        googleMap.setOnMapLongClickListener(this);
+        googleMap.setOnInfoWindowClickListener( this );
+        googleMap.setOnMarkerDragListener(this);
+        googleMap.setOnMapClickListener(this);
+        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         try
         {
-            getMap().setMyLocationEnabled(true);
+            googleMap.setMyLocationEnabled(true);
         }
         catch (SecurityException e)
         {
@@ -388,5 +501,25 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    private void initMarker(LatLng latLng)
+    {
+        if(marker != null)
+            marker.remove();
+        MarkerOptions options = new MarkerOptions().position(latLng);
+        options.title(getAddressFromLatLng(latLng));
+        options.icon(BitmapDescriptorFactory.fromBitmap(generateBitmapFromDrawable(R.drawable.ic_house)));
+        marker = googleMap.addMarker(options);
+        marker.setDraggable(true);
+
+        double lat = marker.getPosition().latitude;
+        double lng = marker.getPosition().longitude;
+        String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
+                "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+        //String urlBus = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
+        //        "&radius=1000&type=bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+        String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
+        new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
 }
