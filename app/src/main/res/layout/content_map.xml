@@ -10,6 +10,16 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="io.github.maniknarang.riderr.MapActivity">
 
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout
+        xmlns:sothree="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/sliding_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="bottom"
+        sothree:umanoPanelHeight="56dp"
+        sothree:umanoShadowHeight="0dp"
+        sothree:umanoAnchorPoint="0.3">
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -79,5 +89,12 @@
             app:sparkbutton_animationSpeed="1.5"/>
     </FrameLayout>
 </FrameLayout>
-
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="20dp"
+            android:gravity="center|top"
+            android:text="Filter Subway Stations"
+            android:textSize="12sp" />
+</com.sothree.slidinguppanel.SlidingUpPanelLayout>
 </RelativeLayout>
