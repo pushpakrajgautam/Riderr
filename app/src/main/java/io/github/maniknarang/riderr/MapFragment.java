@@ -425,6 +425,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     {
         CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
                 mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
+        googleMap.setPadding(0,0,0,0);
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
         googleMap.setMapType( MAP_TYPES[curMapTypeIndex] );
         LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
@@ -456,6 +457,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         String address = "";
         try
         {
+            if(!geocoder.getFromLocation(latLng.latitude,latLng.longitude,1).isEmpty())
             address = geocoder
                     .getFromLocation( latLng.latitude, latLng.longitude, 1 )
                     .get( 0 ).getAddressLine( 0 );
