@@ -82,13 +82,13 @@ public class MapActivity extends AppCompatActivity
         TextView riderrHead = (TextView) findViewById(R.id.riderr_head_nav);
         riderrHead.setTypeface(font);
 
-        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
+        /*ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
         if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
                 connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED))
         {
             AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-            alertDialog.setTitle("Exiting");
-            alertDialog.setMessage("No internet connection");
+            alertDialog.setTitle("Settings");
+            alertDialog.setMessage("The app requires an internet connection. Connect?");
             alertDialog.setCancelable(false);
             alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
             {
@@ -101,7 +101,7 @@ public class MapActivity extends AppCompatActivity
             AlertDialog dialog = alertDialog.create();
             dialog.show();
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
-        }
+        }*/
 
         Typeface panelFont = Typeface.createFromAsset(getAssets(),"Quicksand-Regular.otf");
         TextView panelText = (TextView) findViewById(R.id.panel_text);
@@ -185,12 +185,6 @@ public class MapActivity extends AppCompatActivity
     @Override
     public void onMapReady(final GoogleMap googleMap)
     {
-        try
-        {
-            googleMap.setMyLocationEnabled(true);
-
-        }
-        catch (SecurityException e) {}
         loc_button.setEventListener(new SparkEventListener()
         {
             @Override
