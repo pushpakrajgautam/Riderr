@@ -195,7 +195,9 @@ public class MapActivity extends AppCompatActivity
                     double lat = googleMap.getMyLocation().getLatitude();
                     double lon = googleMap.getMyLocation().getLongitude();
                     LatLng latLng = new LatLng(lat, lon);
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,16);
+                    CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
+                            mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
+                    CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
                     googleMap.animateCamera(cameraUpdate);
                 }
             }

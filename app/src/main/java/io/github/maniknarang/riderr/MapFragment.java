@@ -94,7 +94,9 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     {
         super.onCreate(savedInstanceState);
 
-        final LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+
+
+        LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
 
         if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) )
         {
