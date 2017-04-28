@@ -115,6 +115,11 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
         }
 
+        builgGoogleApiClient();
+    }
+
+    protected synchronized void builgGoogleApiClient()
+    {
         mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
                 .addConnectionCallbacks( this )
                 .addOnConnectionFailedListener( this )
@@ -186,8 +191,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     public void onMapReady(GoogleMap googleMap)
     {
         this.googleMap=googleMap;
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
-        initListeners();
     }
 
     private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
@@ -344,6 +347,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
 
+    @Override
     public void onConnected(Bundle bundle)
     {
         try
@@ -370,31 +374,25 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
 
     private void initCamera(Location mCurrentLocation)
     {
+        try
+        {
+            googleMap.setMyLocationEnabled(true);
+        }
+        catch (SecurityException e) {}
         CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
                 mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
         googleMap.setPadding(0,0,0,0);
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
         googleMap.setMapType( MAP_TYPES[curMapTypeIndex] );
-        LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-        initMarker(latLng);
-    }
-
-    private void initListeners()
-    {
         googleMap.setOnMarkerClickListener(this);
         googleMap.setOnMapLongClickListener(this);
         googleMap.setOnInfoWindowClickListener( this );
         googleMap.setOnMarkerDragListener(this);
         googleMap.setOnMapClickListener(this);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-        try
-        {
-            googleMap.setMyLocationEnabled(true);
-        }
-        catch (SecurityException e)
-        {
-
-        }
+        LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        initMarker(latLng);
     }
 
     private String getAddressFromLatLng( LatLng latLng )
