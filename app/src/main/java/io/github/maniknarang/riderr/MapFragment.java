@@ -10,10 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -30,7 +28,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -74,13 +71,14 @@ import okhttp3.Response;
 
 public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener, GoogleMap.OnMarkerDragListener,
-        OnMapReadyCallback {
+        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener,GoogleMap.OnMarkerDragListener,
+        OnMapReadyCallback
+{
     private GoogleApiClient mGoogleApiClient;
     public static Location mCurrentLocation;
     private final int[] MAP_TYPES = {GoogleMap.MAP_TYPE_SATELLITE, GoogleMap.MAP_TYPE_NORMAL,
-            GoogleMap.MAP_TYPE_HYBRID, GoogleMap.MAP_TYPE_TERRAIN,
-            GoogleMap.MAP_TYPE_NONE};
+                                     GoogleMap.MAP_TYPE_HYBRID, GoogleMap.MAP_TYPE_TERRAIN,
+                                     GoogleMap.MAP_TYPE_NONE };
     private int curMapTypeIndex = 1;
     private LocationRequest mLocationRequest;
     private boolean mapped = false;
@@ -91,77 +89,78 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
             = MediaType.parse("application/json; charset=utf-8");
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        final LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
-            alertLocationDialog();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-
-    private void alertLocationDialog()
+    public void onCreate(Bundle savedInstanceState)
     {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(getContext());
-        alertDialog.setTitle("Settings");
-        alertDialog.setMessage("The app requires GPS. Enable it?");
-        alertDialog.setCancelable(false);
-        alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
+        super.onCreate(savedInstanceState);
+        if (ContextCompat.checkSelfPermission(getActivity(),
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(getContext(),
+                        android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED)
         {
-            public void onClick(DialogInterface dialog, int which)
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION))
             {
-                Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivityForResult(i, 0);
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
             }
-        });
-        AlertDialog dialog = alertDialog.create();
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
+            else
+            {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
+            }
+        }
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
+    {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
+        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
+                .addConnectionCallbacks( this )
+                .addOnConnectionFailedListener( this )
+                .addApi( LocationServices.API )
+                .build();
         getMapAsync(this);
     }
 
     @Override
-    public void onStart() {
+    public void onStart()
+    {
         super.onStart();
         mGoogleApiClient.connect();
     }
 
     @Override
-    public void onStop() {
+    public void onStop()
+    {
         super.onStop();
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected())
+        if(mGoogleApiClient != null && mGoogleApiClient.isConnected())
             mGoogleApiClient.disconnect();
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
+    public void onConnectionSuspended(int i)
+    {
         Toast.makeText(getContext(), "Suspended", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    public void onConnectionFailed(ConnectionResult connectionResult)
+    {
         Toast.makeText(getContext(), "Failed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
-    public void onInfoWindowClick(Marker marker) {
+    public void onInfoWindowClick(Marker marker)
+    {
 
     }
 
     @Override
-    public void onMapClick(LatLng latLng) {
+    public void onMapClick(LatLng latLng)
+    {
         //markerPoints.clear();
         //getMap().clear();
         //LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
@@ -179,55 +178,67 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        this.googleMap = googleMap;
+    public void onMapReady(GoogleMap googleMap)
+    {
+        this.googleMap=googleMap;
         googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
         initListeners();
     }
 
-    private class NearbyPlacesTask extends AsyncTask<String, Void, Void> {
+    private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
+    {
         @Override
-        protected Void doInBackground(final String... urls) {
+        protected Void doInBackground(final String... urls)
+        {
             OkHttpClient client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
-                    .readTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).build();
+                                  .readTimeout(10,TimeUnit.SECONDS).writeTimeout(10,TimeUnit.SECONDS).build();
             Request request1 = new Request.Builder()
                     .url(urls[0])
                     .build();
             Request request2 = new Request.Builder()
                     .url(urls[1])
                     .build();
-            client.newCall(request1).enqueue(new Callback() {
+            client.newCall(request1).enqueue(new Callback()
+            {
                 @Override
                 public void onFailure(Call call, IOException e) {
 
                 }
 
                 @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    try {
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
                         String responseData = response.body().string();
                         JSONObject jsonObject = new JSONObject(responseData);
                         Log.v("1:", responseData);
-                    } catch (JSONException e) {
                     }
+                    catch (JSONException e){}
                 }
             });
 
-            client.newCall(request2).enqueue(new Callback() {
+            client.newCall(request2).enqueue(new Callback()
+            {
                 @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.v("Hey", urls[1]);
+                public void onFailure(Call call, IOException e)
+                {
+                    Log.v("Hey",urls[1]);
 
                 }
 
                 @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    try {
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
                         String responseData = response.body().string();
                         JSONArray jsonArray = new JSONArray(responseData);
                         Log.v("2:", responseData);
-                    } catch (JSONException e) {
-                        Log.v("Hey", "JSON" + e.toString());
+                    }
+                    catch (JSONException e)
+                    {
+                        Log.v("Hey","JSON"+e.toString());
                     }
                 }
             });
@@ -241,13 +252,15 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
                     .build();
 
             Response response = null;
-            try {
+            try
+            {
                 response = client.newCall(request).execute();
-                if (response.isSuccessful())
-                    Log.v("resp:", response.body().string());
+                if(response.isSuccessful())
+                    Log.v("resp:",response.body().string());
                 else
-                    Log.v("err", response.toString());
-            } catch (IOException e) {
+                    Log.v("err",response.toString());
+            } catch (IOException e)
+            {
                 e.printStackTrace();
             }
 
@@ -256,7 +269,8 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     }
 
     @Override
-    public void onMapLongClick(LatLng latLng) {
+    public void onMapLongClick(LatLng latLng)
+    {
         /*if(mapped)
         {
             mapped=false;
@@ -267,34 +281,33 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     }
 
     @Override
-    public boolean onMarkerClick(Marker marker) {
+    public boolean onMarkerClick(Marker marker)
+    {
         marker.showInfoWindow();
         return true;
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-        if (mCurrentLocation == null) {
-            mCurrentLocation = location;
-            initCamera(mCurrentLocation);
-            LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
-            initMarker(latLng);
-        } else {
-            mCurrentLocation = location;
-        }
+    public void onLocationChanged(Location location)
+    {
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        initMarker(latLng);
     }
 
     @Override
-    public void onMarkerDragStart(Marker marker) {
+    public void onMarkerDragStart(Marker marker)
+    {
     }
 
     @Override
-    public void onMarkerDrag(Marker marker) {
+    public void onMarkerDrag(Marker marker)
+    {
 
     }
 
     @Override
-    public void onMarkerDragEnd(Marker marker) {
+    public void onMarkerDragEnd(Marker marker)
+    {
         /*markerPoints.clear();
         getMap().clear();
             LatLng origin = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
@@ -317,23 +330,95 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         double lng = marker.getPosition().longitude;
         String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
                 "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
-        String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat + "/lon/" + lng + "/rad/1";
-        new NearbyPlacesTask().execute(urlMetro, urlBus);
+        String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
+        new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults)
+    {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode)
+        {
+            case 101:
+            {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                {
+
+                    mLocationRequest = LocationRequest.create()
+                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                            .setInterval(10 * 1000)
+                            .setFastestInterval(1 * 1000);
+
+                }
+                else
+                {
+
+                }
+                return;
+            }
+        }
+    }
+
+    public void locationAlertDialog(final Context context)
+    {
+
+        AlertDialog.Builder d = new AlertDialog.Builder(context);
+        d.setTitle("No Providers");
+        d.setCancelable(false);
+        d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
+
+        d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener()
+        {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivityForResult(i, 0);
+            }
+        });
+        AlertDialog dialog = d.create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
+    }
+
+
 
     public void onConnected(Bundle bundle)
     {
-        mLocationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(10 * 1000)
-                .setFastestInterval(1 * 1000);
         try
         {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
-                        mLocationRequest, this);
+            mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         }
-        catch(SecurityException e) {}
+        catch(SecurityException e)
+        {
 
+        }
+        if(mCurrentLocation == null)
+        {
+            if (mLocationRequest == null)
+            {
+                locationAlertDialog(getActivity());
+                mLocationRequest = LocationRequest.create();
+            }
+            try
+            {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                        mLocationRequest, this);
+            }
+            catch(SecurityException e)
+            {
+
+            }
+        }
+        else
+        {
+            initCamera(mCurrentLocation);
+        }
     }
 
     private void initCamera(Location mCurrentLocation)
