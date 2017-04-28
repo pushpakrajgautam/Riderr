@@ -26,22 +26,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.animation.TranslateAnimation;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.request.animation.ViewPropertyAnimation;
-import com.daimajia.androidanimations.library.Techniques;
-import com.daimajia.androidanimations.library.YoYo;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdate;
@@ -49,7 +40,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -70,8 +60,6 @@ public class MapActivity extends AppCompatActivity
     private DrawerLayout drawer;
     public static LocationRequest mLocationRequest;
     private SparkButton loc_button;
-    private SlidingUpPanelLayout slidingUpPanelLayout;
-    private FrameLayout frameLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -103,14 +91,10 @@ public class MapActivity extends AppCompatActivity
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
         }*/
 
-        Typeface panelFont = Typeface.createFromAsset(getAssets(),"Quicksand-Regular.otf");
-        TextView panelText = (TextView) findViewById(R.id.panel_text);
-        panelText.setTypeface(panelFont);
-
-        slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
 
         MapFragment mapFragment = (MapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map_fragment);
@@ -178,6 +162,9 @@ public class MapActivity extends AppCompatActivity
             emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Feedback - Riderr");
             startActivity(Intent.createChooser(emailIntent, "Send Email..."));
         }
+
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -212,41 +199,6 @@ public class MapActivity extends AppCompatActivity
 
             }
         });
-
-        slidingUpPanelLayout.addPanelSlideListener(new SlidingUpPanelLayout.PanelSlideListener()
-        {
-            @Override
-            public void onPanelSlide(View panel, float slideOffset)
-            {
-                final int panelHeight = findViewById(R.id.linear_slide).getHeight();
-                final int visiblePanelHeight = slidingUpPanelLayout.getPanelHeight();
-                CameraPosition cameraPosition = googleMap.getCameraPosition();
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-                googleMap.setPadding(0,0,0, (int) ((panelHeight - visiblePanelHeight) *slideOffset));
-                loc_button.setTranslationY(-(panelHeight - visiblePanelHeight) *slideOffset);
-                googleMap.moveCamera(cameraUpdate);
-            }
-
-            @Override
-            public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState,
-                                            SlidingUpPanelLayout.PanelState newState)
-            {
-            }
-        });
-
-
-    }
-
-    @Override
-    public void onBackPressed()
-    {
-        if(drawer.isDrawerOpen(GravityCompat.START))
-            drawer.closeDrawer(GravityCompat.START);
-        else if(slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.COLLAPSED &&
-                slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.ANCHORED)
-            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
-        else
-            super.onBackPressed();
     }
 
     private Bitmap generateBitmapFromDrawable(int drawablesRes)
