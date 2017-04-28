@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -92,24 +93,33 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        if (ContextCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(getContext(),
-                        android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED)
-        {
 
-            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                    Manifest.permission.ACCESS_FINE_LOCATION))
+        final LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+
+        if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) )
+        {
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(getContext());
+            alertDialog.setTitle("Settings");
+            alertDialog.setMessage("The app requires GPS.Enable?");
+            alertDialog.setCancelable(false);
+            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
             {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
-            else
-            {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 101);
-            }
+                public void onClick(DialogInterface dialog, int which)
+                {
+                    Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                    startActivityForResult(i, 0);
+                }
+            });
+            AlertDialog dialog = alertDialog.create();
+            dialog.show();
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
         }
+
+        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
+                .addConnectionCallbacks( this )
+                .addOnConnectionFailedListener( this )
+                .addApi( LocationServices.API )
+                .build();
     }
 
     @Override
@@ -117,11 +127,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     {
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
-        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
-                .addConnectionCallbacks( this )
-                .addOnConnectionFailedListener( this )
-                .addApi( LocationServices.API )
-                .build();
         getMapAsync(this);
     }
 
@@ -290,8 +295,13 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     @Override
     public void onLocationChanged(Location location)
     {
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        initMarker(latLng);
+        if(mCurrentLocation == null)
+        {
+            mCurrentLocation = location;
+            initCamera(mCurrentLocation);
+        }
+        else
+            mCurrentLocation=location;
     }
 
     @Override
@@ -334,91 +344,28 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode)
-        {
-            case 101:
-            {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-
-                    mLocationRequest = LocationRequest.create()
-                            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                            .setInterval(10 * 1000)
-                            .setFastestInterval(1 * 1000);
-
-                }
-                else
-                {
-
-                }
-                return;
-            }
-        }
-    }
-
-    public void locationAlertDialog(final Context context)
-    {
-
-        AlertDialog.Builder d = new AlertDialog.Builder(context);
-        d.setTitle("No Providers");
-        d.setCancelable(false);
-        d.setMessage("No providers to get your location. Press Ok to turn on your GPS.");
-
-        d.setPositiveButton(context.getResources().getString(R.string.dialogAccept), new DialogInterface.OnClickListener()
-        {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which)
-            {
-                Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivityForResult(i, 0);
-            }
-        });
-        AlertDialog dialog = d.create();
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
-    }
-
-
-
     public void onConnected(Bundle bundle)
     {
         try
         {
             mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        }
-        catch(SecurityException e)
-        {
-
-        }
-        if(mCurrentLocation == null)
-        {
-            if (mLocationRequest == null)
+            if (mCurrentLocation == null)
             {
-                locationAlertDialog(getActivity());
-                mLocationRequest = LocationRequest.create();
-            }
-            try
-            {
+                mLocationRequest = LocationRequest.create()
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                        .setInterval(10 * 1000)
+                        .setFastestInterval(1 * 1000);
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
                         mLocationRequest, this);
             }
-            catch(SecurityException e)
+            else
             {
-
+                initCamera(mCurrentLocation);
             }
         }
-        else
-        {
-            initCamera(mCurrentLocation);
-        }
+
+        catch(SecurityException e) {}
+
     }
 
     private void initCamera(Location mCurrentLocation)
