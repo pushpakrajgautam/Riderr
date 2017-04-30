@@ -35,7 +35,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:name="io.github.maniknarang.riderr.MapFragment"
-            android:id="@+id/map_fragment"/>
+            android:id="@+id/map_fragment">
+        </fragment>
 
         <com.varunest.sparkbutton.SparkButton
             android:id="@+id/spark_loc"

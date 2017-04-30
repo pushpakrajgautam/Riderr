@@ -2,14 +2,18 @@ package io.github.maniknarang.riderr;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -38,12 +42,22 @@ import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.request.animation.ViewPropertyAnimation;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -61,17 +75,17 @@ import com.varunest.sparkbutton.SparkEventListener;
 import java.io.IOException;
 import java.lang.reflect.Type;
 
-import static io.github.maniknarang.riderr.MapFragment.mCurrentLocation;
-
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback,
-        OnMapReadyCallback
+        OnMapReadyCallback,ResultCallback<LocationSettingsResult>,GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
     private DrawerLayout drawer;
-    public static LocationRequest mLocationRequest;
     private SparkButton loc_button;
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private FrameLayout frameLayout;
+    private MapFragment mapFragment;
+    private LocationManager locationManager;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -82,26 +96,33 @@ public class MapActivity extends AppCompatActivity
         TextView riderrHead = (TextView) findViewById(R.id.riderr_head_nav);
         riderrHead.setTypeface(font);
 
-        /*ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(this.CONNECTIVITY_SERVICE);
-        if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
-                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED))
+        mapFragment = (MapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map_fragment);
+        mapFragment.getMapAsync(this);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
         {
-            AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
-            alertDialog.setTitle("Exiting");
-            alertDialog.setMessage("No internet connection");
-            alertDialog.setCancelable(false);
-            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED)
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             {
-                public void onClick(DialogInterface dialog, int which)
-                {
-                    Intent i = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                    startActivityForResult(i, 0);
-                }
-            });
-            AlertDialog dialog = alertDialog.create();
-            dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
-        }*/
+                buildGoogleApiClient();
+                mapFragment.alertLocRequest();
+                LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                        .addLocationRequest(mapFragment.mLocationRequest);
+                builder.setAlwaysShow(true);
+                PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings
+                        (mapFragment.mGoogleApiClient, builder.build());
+                result.setResultCallback(this);
+            }
+        }
+        else
+            buildGoogleApiClient();
 
         Typeface panelFont = Typeface.createFromAsset(getAssets(),"Quicksand-Regular.otf");
         TextView panelText = (TextView) findViewById(R.id.panel_text);
@@ -111,10 +132,6 @@ public class MapActivity extends AppCompatActivity
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        MapFragment mapFragment = (MapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map_fragment);
-        mapFragment.getMapAsync(this);
 
         loc_button = (SparkButton) findViewById(R.id.spark_loc);
 
@@ -190,15 +207,56 @@ public class MapActivity extends AppCompatActivity
             @Override
             public void onEvent(ImageView button, boolean buttonState)
             {
-                if(googleMap.getMyLocation() != null)
+                if (ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                        PackageManager.PERMISSION_GRANTED || !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
                 {
-                    double lat = googleMap.getMyLocation().getLatitude();
-                    double lon = googleMap.getMyLocation().getLongitude();
-                    LatLng latLng = new LatLng(lat, lon);
-                    CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
-                            mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
-                    CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-                    googleMap.animateCamera(cameraUpdate);
+                    if (ContextCompat.checkSelfPermission(MapActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                            PackageManager.PERMISSION_GRANTED)
+                        ActivityCompat.requestPermissions(MapActivity.this,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                    {
+                        AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapActivity.this);
+                        alertDialog.setMessage("Your GPS seems to be disabled. Turn it on here.")
+                                .setCancelable(false)
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                                {
+                                    public void onClick(final DialogInterface dialog, final int id)
+                                    {
+                                        Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                        startActivityForResult(i, 500);
+                                    }
+                                });
+                        AlertDialog dialog = alertDialog.create();
+                        dialog.show();
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        if (googleMap.getMyLocation() != null && mapFragment.mCurrentLocation != null)
+                        {
+                            double lat = googleMap.getMyLocation().getLatitude();
+                            double lon = googleMap.getMyLocation().getLongitude();
+                            LatLng latLng = new LatLng(lat, lon);
+                            CameraPosition cameraPosition = CameraPosition.builder()
+                                    .target(new LatLng(mapFragment.mCurrentLocation.getLatitude(),
+                                    mapFragment.mCurrentLocation.getLongitude()))
+                                    .zoom(16f).bearing(0.0f).tilt(0.0f).build();
+                            CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+                            googleMap.animateCamera(cameraUpdate);
+                        }
+                        else
+                            Toast.makeText(MapActivity.this,"Just a sec!",Toast.LENGTH_LONG).show();
+                    }
+                    catch (IllegalStateException e)
+                    {
+                        Toast.makeText(MapActivity.this,"Just a sec. The app is enabling the location layer",
+                                Toast.LENGTH_LONG).show();
+                    }
                 }
             }
 
@@ -251,6 +309,30 @@ public class MapActivity extends AppCompatActivity
             super.onBackPressed();
     }
 
+    @Override
+    public void onResult(LocationSettingsResult result)
+    {
+        final Status status = result.getStatus();
+        switch (status.getStatusCode())
+        {
+            case LocationSettingsStatusCodes.SUCCESS:
+                mapFragment.mGoogleApiClient.connect();
+                break;
+            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                try
+                {
+                    status.startResolutionForResult(this, 101);
+                }
+                catch (IntentSender.SendIntentException e)
+                {
+                }
+                break;
+            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                Toast.makeText(this,"Settings change unavailable. You might have to reinstall the app.",Toast.LENGTH_LONG);
+                break;
+        }
+    }
+
     private Bitmap generateBitmapFromDrawable(int drawablesRes)
     {
         Bitmap bitmap;
@@ -262,4 +344,115 @@ public class MapActivity extends AppCompatActivity
         drawable.draw(canvas);
         return bitmap;
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
+        switch (requestCode)
+        {
+            case 1:
+                if(!(grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED))
+                    Toast.makeText(this,"Location permission denied. The app won't function properly.",
+                            Toast.LENGTH_LONG).show();
+                else
+                {
+                    buildGoogleApiClient();
+                    if(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+                        mapFragment.mGoogleApiClient.connect();
+                }
+                return;
+
+            case 101:
+                return;
+
+            default:
+                return;
+        }
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+        if(mapFragment.mGoogleApiClient != null)
+            mapFragment.mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onStop()
+    {
+        super.onStop();
+        if(mapFragment.mGoogleApiClient != null && mapFragment.mGoogleApiClient.isConnected())
+            mapFragment.mGoogleApiClient.disconnect();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i)
+    {
+        Toast.makeText(this, "Suspended", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult)
+    {
+        Toast.makeText(this, "Failed", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle)
+    {
+        try
+        {
+            mapFragment.mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mapFragment.mGoogleApiClient);
+            if (mapFragment.mCurrentLocation == null)
+            {
+                mapFragment.mLocationRequest = LocationRequest.create()
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                        .setInterval(10000)
+                        .setFastestInterval(1000);
+                LocationServices.FusedLocationApi.requestLocationUpdates(mapFragment.mGoogleApiClient,
+                        mapFragment.mLocationRequest, this);
+            }
+            else
+            {
+                mapFragment.initCamera(mapFragment.mCurrentLocation);
+            }
+        }
+
+        catch(SecurityException e) {}
+
+    }
+
+    protected synchronized void buildGoogleApiClient()
+    {
+        mapFragment.mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks( this )
+                .addOnConnectionFailedListener( this )
+                .addApi( LocationServices.API )
+                .build();
+    }
+
+    @Override
+    public void onLocationChanged(Location location)
+    {
+        if(mapFragment.mCurrentLocation == null)
+        {
+            mapFragment.mCurrentLocation = location;
+            mapFragment.initCamera(mapFragment.mCurrentLocation);
+        }
+        else
+            mapFragment.mCurrentLocation=location;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        switch (requestCode)
+        {
+            case 500:
+                mapFragment.mGoogleApiClient.connect();
+        }
+
+    }
+
 }

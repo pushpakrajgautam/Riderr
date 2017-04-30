@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -29,9 +30,15 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -70,63 +77,40 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class MapFragment extends SupportMapFragment implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
-        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, LocationListener,GoogleMap.OnMarkerDragListener,
+import static android.content.ContentValues.TAG;
+
+public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfoWindowClickListener, GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener, GoogleMap.OnMarkerDragListener,
         OnMapReadyCallback
 {
-    private GoogleApiClient mGoogleApiClient;
-    public static Location mCurrentLocation;
+    public GoogleApiClient mGoogleApiClient;
+    public Location mCurrentLocation;
     private final int[] MAP_TYPES = {GoogleMap.MAP_TYPE_SATELLITE, GoogleMap.MAP_TYPE_NORMAL,
-                                     GoogleMap.MAP_TYPE_HYBRID, GoogleMap.MAP_TYPE_TERRAIN,
-                                     GoogleMap.MAP_TYPE_NONE };
+            GoogleMap.MAP_TYPE_HYBRID, GoogleMap.MAP_TYPE_TERRAIN,
+            GoogleMap.MAP_TYPE_NONE};
     private int curMapTypeIndex = 1;
-    private LocationRequest mLocationRequest;
+    public LocationRequest mLocationRequest;
     private boolean mapped = false;
     private String url;
     private Marker marker;
     private GoogleMap googleMap;
     public static final MediaType JSON
             = MediaType.parse("application/json; charset=utf-8");
+    private LocationManager locationManager;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState)
+    public void alertLocRequest()
     {
-        super.onCreate(savedInstanceState);
+        Log.v("hey","bro");
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10000)
+                .setFastestInterval(1000);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
+        builder.setAlwaysShow(true);
 
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings
+                (mGoogleApiClient, builder.build());
 
-
-        LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
-
-        if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) )
-        {
-            AlertDialog.Builder alertDialog = new AlertDialog.Builder(getContext());
-            alertDialog.setTitle("Settings");
-            alertDialog.setMessage("The app requires GPS.Enable?");
-            alertDialog.setCancelable(false);
-            alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener()
-            {
-                public void onClick(DialogInterface dialog, int which)
-                {
-                    Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                    startActivityForResult(i, 0);
-                }
-            });
-            AlertDialog dialog = alertDialog.create();
-            dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.BLUE);
-        }
-
-        builgGoogleApiClient();
-    }
-
-    protected synchronized void builgGoogleApiClient()
-    {
-        mGoogleApiClient = new GoogleApiClient.Builder( getActivity() )
-                .addConnectionCallbacks( this )
-                .addOnConnectionFailedListener( this )
-                .addApi( LocationServices.API )
-                .build();
     }
 
     @Override
@@ -135,33 +119,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
         getMapAsync(this);
-    }
-
-    @Override
-    public void onStart()
-    {
-        super.onStart();
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onStop()
-    {
-        super.onStop();
-        if(mGoogleApiClient != null && mGoogleApiClient.isConnected())
-            mGoogleApiClient.disconnect();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i)
-    {
-        Toast.makeText(getContext(), "Suspended", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult)
-    {
-        Toast.makeText(getContext(), "Failed", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -193,89 +150,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     public void onMapReady(GoogleMap googleMap)
     {
         this.googleMap=googleMap;
-    }
-
-    private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
-    {
-        @Override
-        protected Void doInBackground(final String... urls)
-        {
-            OkHttpClient client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
-                                  .readTimeout(10,TimeUnit.SECONDS).writeTimeout(10,TimeUnit.SECONDS).build();
-            Request request1 = new Request.Builder()
-                    .url(urls[0])
-                    .build();
-            Request request2 = new Request.Builder()
-                    .url(urls[1])
-                    .build();
-            client.newCall(request1).enqueue(new Callback()
-            {
-                @Override
-                public void onFailure(Call call, IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException
-                {
-                    try
-                    {
-                        String responseData = response.body().string();
-                        JSONObject jsonObject = new JSONObject(responseData);
-                        Log.v("1:", responseData);
-                    }
-                    catch (JSONException e){}
-                }
-            });
-
-            client.newCall(request2).enqueue(new Callback()
-            {
-                @Override
-                public void onFailure(Call call, IOException e)
-                {
-                    Log.v("Hey",urls[1]);
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException
-                {
-                    try
-                    {
-                        String responseData = response.body().string();
-                        JSONArray jsonArray = new JSONArray(responseData);
-                        Log.v("2:", responseData);
-                    }
-                    catch (JSONException e)
-                    {
-                        Log.v("Hey","JSON"+e.toString());
-                    }
-                }
-            });
-
-            RequestBody formBody = new FormBody.Builder()
-                    .add("stopID", "2714")
-                    .build();
-            Request request = new Request.Builder()
-                    .url("http://bmtcmob.hostg.in/api/itsstopwise/details")
-                    .post(formBody)
-                    .build();
-
-            Response response = null;
-            try
-            {
-                response = client.newCall(request).execute();
-                if(response.isSuccessful())
-                    Log.v("resp:",response.body().string());
-                else
-                    Log.v("err",response.toString());
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
+        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
     }
 
     @Override
@@ -295,18 +170,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
     {
         marker.showInfoWindow();
         return true;
-    }
-
-    @Override
-    public void onLocationChanged(Location location)
-    {
-        if(mCurrentLocation == null)
-        {
-            mCurrentLocation = location;
-            initCamera(mCurrentLocation);
-        }
-        else
-            mCurrentLocation=location;
     }
 
     @Override
@@ -349,32 +212,7 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
 
-    @Override
-    public void onConnected(Bundle bundle)
-    {
-        try
-        {
-            mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            if (mCurrentLocation == null)
-            {
-                mLocationRequest = LocationRequest.create()
-                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                        .setInterval(10 * 1000)
-                        .setFastestInterval(1 * 1000);
-                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
-                        mLocationRequest, this);
-            }
-            else
-            {
-                initCamera(mCurrentLocation);
-            }
-        }
-
-        catch(SecurityException e) {}
-
-    }
-
-    private void initCamera(Location mCurrentLocation)
+    public void initCamera(Location mCurrentLocation)
     {
         try
         {
@@ -383,7 +221,6 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         catch (SecurityException e) {}
         CameraPosition cameraPosition = CameraPosition.builder().target(new LatLng(mCurrentLocation.getLatitude(),
                 mCurrentLocation.getLongitude())).zoom(16f).bearing(0.0f).tilt(0.0f).build();
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
         googleMap.setPadding(0,0,0,0);
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), null);
         googleMap.setMapType( MAP_TYPES[curMapTypeIndex] );
@@ -470,5 +307,88 @@ public class MapFragment extends SupportMapFragment implements GoogleApiClient.C
         //        "&radius=1000&type=bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
         new NearbyPlacesTask().execute(urlMetro,urlBus);
+    }
+
+    private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
+    {
+        @Override
+        protected Void doInBackground(final String... urls)
+        {
+            OkHttpClient client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10,TimeUnit.SECONDS).writeTimeout(10,TimeUnit.SECONDS).build();
+            Request request1 = new Request.Builder()
+                    .url(urls[0])
+                    .build();
+            Request request2 = new Request.Builder()
+                    .url(urls[1])
+                    .build();
+            client.newCall(request1).enqueue(new Callback()
+            {
+                @Override
+                public void onFailure(Call call, IOException e) {
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
+                        String responseData = response.body().string();
+                        JSONObject jsonObject = new JSONObject(responseData);
+                        Log.v("1:", responseData);
+                    }
+                    catch (JSONException e){}
+                }
+            });
+
+            client.newCall(request2).enqueue(new Callback()
+            {
+                @Override
+                public void onFailure(Call call, IOException e)
+                {
+                    Log.v("Hey",urls[1]);
+
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException
+                {
+                    try
+                    {
+                        String responseData = response.body().string();
+                        JSONArray jsonArray = new JSONArray(responseData);
+                        Log.v("2:", responseData);
+                    }
+                    catch (JSONException e)
+                    {
+                        Log.v("Hey","JSON"+e.toString());
+                    }
+                }
+            });
+
+            RequestBody formBody = new FormBody.Builder()
+                    .add("stopID", "2714")
+                    .build();
+            Request request = new Request.Builder()
+                    .url("http://bmtcmob.hostg.in/api/itsstopwise/details")
+                    .post(formBody)
+                    .build();
+
+            Response response = null;
+            try
+            {
+                response = client.newCall(request).execute();
+                if(response.isSuccessful())
+                    Log.v("resp:",response.body().string());
+                else
+                    Log.v("err",response.toString());
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 }
