@@ -86,6 +86,7 @@ public class MapActivity extends AppCompatActivity
     private FrameLayout frameLayout;
     private MapFragment mapFragment;
     private LocationManager locationManager;
+    private Toast myToast;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -220,7 +221,7 @@ public class MapActivity extends AppCompatActivity
                         AlertDialog.Builder alertDialog = new AlertDialog.Builder(MapActivity.this);
                         alertDialog.setMessage("Your GPS seems to be disabled. Turn it on here.")
                                 .setCancelable(false)
-                                .setPositiveButton("Yes", new DialogInterface.OnClickListener()
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener()
                                 {
                                     public void onClick(final DialogInterface dialog, final int id)
                                     {
@@ -250,7 +251,13 @@ public class MapActivity extends AppCompatActivity
                             googleMap.animateCamera(cameraUpdate);
                         }
                         else
-                            Toast.makeText(MapActivity.this,"Just a sec!",Toast.LENGTH_LONG).show();
+                        {
+                            if(myToast != null)
+                                myToast.cancel();
+                            myToast = Toast.makeText(MapActivity.this, "Just a sec!", Toast.LENGTH_LONG);
+                            myToast.show();
+
+                        }
                     }
                     catch (IllegalStateException e)
                     {
