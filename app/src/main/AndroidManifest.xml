@@ -29,20 +29,12 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ResultActivity"
+            android:name=".PayActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".MapActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MapActivity" />
-        </activity>
-        <activity
-            android:name=".PayActivity"
-            android:launchMode="singleTop"
-            android:parentActivityName=".ResultActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ResultActivity" />
         </activity>
 
         <meta-data

@@ -21,6 +21,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -97,6 +100,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
     public static final MediaType JSON
             = MediaType.parse("application/json; charset=utf-8");
     private LocationManager locationManager;
+    private MapActivity mapActivity;
 
     public void alertLocRequest()
     {
@@ -116,6 +120,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
     {
+        mapActivity = (MapActivity) getActivity();
         super.onViewCreated(view, savedInstanceState);
         setHasOptionsMenu(true);
         getMapAsync(this);
@@ -303,92 +308,50 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         double lng = marker.getPosition().longitude;
         String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
                 "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
-        //String urlBus = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-        //        "&radius=1000&type=bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
-        String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
-        new NearbyPlacesTask().execute(urlMetro,urlBus);
+        new NearbyPlacesTask().execute(urlMetro);
     }
 
-    private class NearbyPlacesTask extends AsyncTask<String,Void,Void>
+    public class NearbyPlacesTask extends AsyncTask<String,Void,ArrayList<Stop>>
     {
         @Override
-        protected Void doInBackground(final String... urls)
+        protected void onPreExecute()
+        {
+            super.onPreExecute();
+            mapActivity.stops.clear();
+        }
+
+        @Override
+        protected ArrayList<Stop> doInBackground(final String... urls)
         {
             OkHttpClient client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(10,TimeUnit.SECONDS).writeTimeout(10,TimeUnit.SECONDS).build();
-            Request request1 = new Request.Builder()
+            Request request = new Request.Builder()
                     .url(urls[0])
                     .build();
-            Request request2 = new Request.Builder()
-                    .url(urls[1])
-                    .build();
-            client.newCall(request1).enqueue(new Callback()
-            {
-                @Override
-                public void onFailure(Call call, IOException e) {
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException
-                {
-                    try
-                    {
-                        String responseData = response.body().string();
-                        JSONObject jsonObject = new JSONObject(responseData);
-                        Log.v("1:", responseData);
-                    }
-                    catch (JSONException e){}
-                }
-            });
-
-            client.newCall(request2).enqueue(new Callback()
-            {
-                @Override
-                public void onFailure(Call call, IOException e)
-                {
-                    Log.v("Hey",urls[1]);
-
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException
-                {
-                    try
-                    {
-                        String responseData = response.body().string();
-                        JSONArray jsonArray = new JSONArray(responseData);
-                        Log.v("2:", responseData);
-                    }
-                    catch (JSONException e)
-                    {
-                        Log.v("Hey","JSON"+e.toString());
-                    }
-                }
-            });
-
-            RequestBody formBody = new FormBody.Builder()
-                    .add("stopID", "2714")
-                    .build();
-            Request request = new Request.Builder()
-                    .url("http://bmtcmob.hostg.in/api/itsstopwise/details")
-                    .post(formBody)
-                    .build();
-
-            Response response = null;
             try
             {
-                response = client.newCall(request).execute();
-                if(response.isSuccessful())
-                    Log.v("resp:",response.body().string());
-                else
-                    Log.v("err",response.toString());
-            } catch (IOException e)
-            {
-                e.printStackTrace();
+                Response response = client.newCall(request).execute();
+                String responseData = response.body().string();
+                JSONObject jsonObject = new JSONObject(responseData);
+                JSONArray jsonArray = jsonObject.getJSONArray("results");
+                for(int i=0; i<jsonArray.length();i++)
+                {
+                    String name = jsonArray.getJSONObject(i).getString("name");
+                    Stop stop = new Stop(name,"","","","");
+                    mapActivity.stops.add(stop);
+                }
             }
+            catch (IOException e){}
+            catch (JSONException e){}
 
-            return null;
+            return mapActivity.stops;
         }
+
+        @Override
+        protected void onPostExecute(ArrayList<Stop> stops)
+        {
+            mapActivity.stopAdapter.notifyDataSetChanged();
+        }
+
     }
 }

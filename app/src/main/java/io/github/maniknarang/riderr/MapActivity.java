@@ -26,9 +26,12 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
@@ -39,8 +42,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,6 +79,7 @@ import com.varunest.sparkbutton.SparkEventListener;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback,
@@ -81,12 +87,16 @@ public class MapActivity extends AppCompatActivity
         GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
     private DrawerLayout drawer;
-    private SparkButton loc_button;
+    private SparkButton loc_button,spark_train,spark_parking,spark_cycle,spark_bus;
     private SlidingUpPanelLayout slidingUpPanelLayout;
     private FrameLayout frameLayout;
     private MapFragment mapFragment;
     private LocationManager locationManager;
     private Toast myToast;
+    public RecyclerView rvStops;
+    public StopAdapter stopAdapter;
+    public ArrayList<Stop> stops;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -125,14 +135,51 @@ public class MapActivity extends AppCompatActivity
         else
             buildGoogleApiClient();
 
-        Typeface panelFont = Typeface.createFromAsset(getAssets(),"Quicksand-Regular.otf");
-        TextView panelText = (TextView) findViewById(R.id.panel_text);
-        panelText.setTypeface(panelFont);
-
         slidingUpPanelLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        int heightt = slidingUpPanelLayout.getPanelHeight();
+        spark_train = (SparkButton) findViewById(R.id.spark_train);
+        spark_bus = (SparkButton) findViewById(R.id.spark_bus);
+        spark_cycle = (SparkButton) findViewById(R.id.spark_cycle);
+        spark_parking = (SparkButton) findViewById(R.id.spark_parking);
+
+        ViewGroup.LayoutParams params = spark_train.getLayoutParams();
+        params.height=heightt;
+        spark_train.setLayoutParams(params);
+        spark_bus.setLayoutParams(params);
+        spark_cycle.setLayoutParams(params);
+        spark_parking.setLayoutParams(params);
+
+        spark_train.setEventListener(new SparkEventListener()
+        {
+            @Override
+            public void onEvent(ImageView button, boolean buttonState)
+            {
+                if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.COLLAPSED)
+                    slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
+
+                spark_train.setBackgroundColor(getResources().getColor(R.color.colorImp));
+                spark_bus.setBackgroundColor(Color.WHITE);
+                spark_cycle.setBackgroundColor(Color.WHITE);
+                spark_parking.setBackgroundColor(Color.WHITE);
+
+            }
+
+            @Override
+            public void onEventAnimationEnd(ImageView button, boolean buttonState)
+            {
+
+            }
+
+            @Override
+            public void onEventAnimationStart(ImageView button, boolean buttonState)
+            {
+
+            }
+        });
 
         loc_button = (SparkButton) findViewById(R.id.spark_loc);
 
@@ -182,6 +229,12 @@ public class MapActivity extends AppCompatActivity
 
             }
         });
+
+        stops = new ArrayList<>();
+        rvStops = (RecyclerView) findViewById(R.id.the_list);
+        rvStops.setLayoutManager(new LinearLayoutManager(this));
+        stopAdapter = new StopAdapter(this,stops);
+        rvStops.setAdapter(stopAdapter);
     }
 
     @Override

@@ -25,6 +25,7 @@
             sothree:umanoAnchorPoint="0.4"
             sothree:umanoFadeColor="@android:color/transparent"
             sothree:umanoDragView="@+id/panel_text"
+            sothree:umanoScrollableView="@+id/the_list"
             android:clickable="true">
 
     <FrameLayout
@@ -59,19 +60,72 @@
             android:id="@+id/linear_slide"
             android:clickable="true"
             android:orientation="vertical">
-        <TextView
-            android:id="@+id/panel_text"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="20dp"
             android:gravity="center|top"
-            android:text="Filter Subway Stations"
-            android:textSize="14sp"
-            android:textColor="@color/colorPrimary"/>
-            <View
+            android:orientation="horizontal"
+            android:id="@+id/panel_text"
+            android:background="#37474F"
+            android:elevation="4dp">
+
+                <com.varunest.sparkbutton.SparkButton
+                    android:id="@+id/spark_train"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="#FFF"
+                    app:sparkbutton_activeImage="@drawable/ic_train"
+                    app:sparkbutton_iconSize="24dp"
+                    app:sparkbutton_primaryColor="@color/colorPrimary"
+                    app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
+                    app:sparkbutton_animationSpeed="1.5"/>
+
+                <com.varunest.sparkbutton.SparkButton
+                    android:id="@+id/spark_bus"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:background="#FFF"
+                    app:sparkbutton_activeImage="@drawable/ic_bus"
+                    app:sparkbutton_iconSize="24dp"
+                    app:sparkbutton_primaryColor="@color/colorPrimary"
+                    app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
+                    app:sparkbutton_animationSpeed="1.5"/>
+
+
+                <com.varunest.sparkbutton.SparkButton
+                    android:id="@+id/spark_cycle"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="#FFF"
+                    app:sparkbutton_activeImage="@drawable/ic_biker"
+                    app:sparkbutton_iconSize="24dp"
+                    app:sparkbutton_primaryColor="@color/colorPrimary"
+                    app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
+                    app:sparkbutton_animationSpeed="1.5"/>
+
+                <com.varunest.sparkbutton.SparkButton
+                    android:id="@+id/spark_parking"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="#FFF"
+                    app:sparkbutton_activeImage="@drawable/ic_parking"
+                    app:sparkbutton_iconSize="24dp"
+                    app:sparkbutton_primaryColor="@color/colorPrimary"
+                    app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
+                    app:sparkbutton_animationSpeed="1.5"/>
+
+        </LinearLayout>
+
+            <android.support.v7.widget.RecyclerView
                 android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:background="@color/colorPrimaryLight" />
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:id="@+id/the_list">
+            </android.support.v7.widget.RecyclerView>
         </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
         <android.support.v7.widget.CardView
