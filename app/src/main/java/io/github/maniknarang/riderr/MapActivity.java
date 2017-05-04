@@ -18,14 +18,18 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -33,6 +37,7 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
@@ -41,6 +46,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -81,6 +89,10 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import github.nisrulz.recyclerviewhelper.RVHItemClickListener;
+import github.nisrulz.recyclerviewhelper.RVHItemDividerDecoration;
+import github.nisrulz.recyclerviewhelper.RVHItemTouchHelperCallback;
+
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback,
         OnMapReadyCallback,ResultCallback<LocationSettingsResult>,GoogleApiClient.ConnectionCallbacks,
@@ -93,12 +105,19 @@ public class MapActivity extends AppCompatActivity
     private MapFragment mapFragment;
     private LocationManager locationManager;
     private Toast myToast;
+    private SparkButton sparkSearch;
+    private SparkButton button;
+    private CardView cardSearch,cardButton;
     public RecyclerView rvStops;
     public StopAdapter stopAdapter;
     public ArrayList<Stop> stops;
+    public SwipeRefreshLayout swipeRefreshLayout;
+    private FragmentManager fragmentManager;
+    private DetailFragment detailFragment;
+    private LinearLayout linearLayout;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
+    protected void onCreate(final Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
@@ -110,6 +129,8 @@ public class MapActivity extends AppCompatActivity
         mapFragment = (MapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
+
+        fragmentManager = getSupportFragmentManager();
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -183,7 +204,8 @@ public class MapActivity extends AppCompatActivity
 
         loc_button = (SparkButton) findViewById(R.id.spark_loc);
 
-        SparkButton button  = (SparkButton) findViewById(R.id.spark_draw);
+        cardButton = (CardView) findViewById(R.id.card_button_view);
+        button  = (SparkButton) findViewById(R.id.spark_draw);
         button.setEventListener(new SparkEventListener() {
             @Override
             public void onEvent(ImageView button, boolean buttonState)
@@ -208,7 +230,8 @@ public class MapActivity extends AppCompatActivity
             }
         });
 
-        SparkButton sparkSearch = (SparkButton) findViewById(R.id.spark_search);
+        cardSearch = (CardView) findViewById(R.id.card_search_view);
+        sparkSearch = (SparkButton) findViewById(R.id.spark_search);
         sparkSearch.setEventListener(new SparkEventListener()
         {
             @Override
@@ -235,6 +258,63 @@ public class MapActivity extends AppCompatActivity
         rvStops.setLayoutManager(new LinearLayoutManager(this));
         stopAdapter = new StopAdapter(this,stops);
         rvStops.setAdapter(stopAdapter);
+
+        ItemTouchHelper.Callback callback = new RVHItemTouchHelperCallback(stopAdapter, true, true,
+                true);
+        ItemTouchHelper helper = new ItemTouchHelper(callback);
+        helper.attachToRecyclerView(rvStops);
+        rvStops.addItemDecoration(new RVHItemDividerDecoration(this, LinearLayoutManager.VERTICAL));
+        rvStops.addOnItemTouchListener(new RVHItemClickListener(this, new RVHItemClickListener.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(View view, final int position)
+            {
+                linearLayout = (LinearLayout) findViewById(R.id.panel_text);
+
+                Animation fadeOut = new AlphaAnimation(1, 0);
+                fadeOut.setInterpolator(new AccelerateInterpolator());
+                fadeOut.setDuration(300);
+                fadeOut.setAnimationListener(new Animation.AnimationListener()
+                {
+                    public void onAnimationEnd(Animation animation)
+                    {
+                        Stop stop = stops.get(position);
+                        Bundle bundle = new Bundle();
+                        String[] stopTimes = new String[stop.getTimes().size()];
+                        stopTimes = stop.getTimes().toArray(stopTimes);
+                        String[] fragPass = {stop.getName(),stop.getRoute(),stop.getTime(),
+                                            stop.getOrderNo(),stop.getLine()};
+                        bundle.putStringArray("stop_detail_head",fragPass);
+                        bundle.putStringArray("stop_detail_time",stopTimes);
+                        linearLayout.setVisibility(View.GONE);
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                        detailFragment = new DetailFragment();
+                        detailFragment.setArguments(bundle);
+                        fragmentTransaction.setCustomAnimations(R.anim.slide_up,R.anim.slide_down);
+                        fragmentTransaction.replace(R.id.linear_slide,detailFragment).commit();
+
+                    }
+                    public void onAnimationRepeat(Animation animation) {}
+                    public void onAnimationStart(Animation animation) {}
+                });
+
+                Animation fadeOut1 = new AlphaAnimation(1, 0);
+                fadeOut1.setInterpolator(new AccelerateInterpolator());
+                fadeOut1.setDuration(300);
+                swipeRefreshLayout.startAnimation(fadeOut1);
+                linearLayout.startAnimation(fadeOut);
+            }
+        }));
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
+        {
+            @Override
+            public void onRefresh()
+            {
+                mapFragment.createTask(mapFragment.urlMetro);
+            }
+        });
     }
 
     @Override
@@ -344,6 +424,20 @@ public class MapActivity extends AppCompatActivity
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
                 googleMap.setPadding(0,0,0, (int) ((panelHeight - visiblePanelHeight) *slideOffset));
                 loc_button.setTranslationY(-(panelHeight - visiblePanelHeight) *slideOffset);
+                if(slideOffset >0.8)
+                {
+                    sparkSearch.setAlpha(1 - slideOffset);
+                    button.setAlpha(1 - slideOffset);
+                    cardSearch.setAlpha(1-slideOffset);
+                    cardButton.setAlpha(1-slideOffset);
+                }
+                else
+                {
+                    sparkSearch.setAlpha(1);
+                    button.setAlpha(1);
+                    cardSearch.setAlpha(1);
+                    cardButton.setAlpha(1);
+                }
                 googleMap.moveCamera(cameraUpdate);
             }
 
@@ -351,6 +445,24 @@ public class MapActivity extends AppCompatActivity
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState,
                                             SlidingUpPanelLayout.PanelState newState)
             {
+                if(newState == SlidingUpPanelLayout.PanelState.EXPANDED)
+                {
+                    button.setEnabled(false);
+                    sparkSearch.setEnabled(false);
+                    button.setVisibility(View.GONE);
+                    sparkSearch.setVisibility(View.GONE);
+                    cardButton.setVisibility(View.GONE);
+                    cardSearch.setVisibility(View.GONE);
+                }
+                else
+                {
+                    button.setEnabled(true);
+                    sparkSearch.setEnabled(true);
+                    button.setVisibility(View.VISIBLE);
+                    sparkSearch.setVisibility(View.VISIBLE);
+                    cardButton.setVisibility(View.VISIBLE);
+                    cardSearch.setVisibility(View.VISIBLE);
+                }
             }
         });
 
@@ -362,9 +474,16 @@ public class MapActivity extends AppCompatActivity
     {
         if(drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
-        else if(slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.COLLAPSED &&
-                slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.ANCHORED)
-            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+        else if(detailFragment != null)
+        {
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.remove(detailFragment).commit();
+            detailFragment = null;
+            linearLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+        }
+        else if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
+            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
         else
             super.onBackPressed();
     }

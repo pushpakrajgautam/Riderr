@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -101,10 +102,10 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
             = MediaType.parse("application/json; charset=utf-8");
     private LocationManager locationManager;
     private MapActivity mapActivity;
+    public String urlMetro;
 
     public void alertLocRequest()
     {
-        Log.v("hey","bro");
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(10000)
@@ -120,8 +121,8 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState)
     {
-        mapActivity = (MapActivity) getActivity();
         super.onViewCreated(view, savedInstanceState);
+        mapActivity = (MapActivity) getActivity();
         setHasOptionsMenu(true);
         getMapAsync(this);
     }
@@ -211,7 +212,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
 
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
-        String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
+        urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
                 "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
         new NearbyPlacesTask().execute(urlMetro,urlBus);
@@ -306,11 +307,17 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
 
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
-        String urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-                "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+        urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
+                "&radius=1000&type=bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+        //mapActivity.stops.add(new Stop("Mantri","Naga-Mantr","01:20 am", "5", "PURPLE"));
+        //mapActivity.stopAdapter.notifyDataSetChanged();
         new NearbyPlacesTask().execute(urlMetro);
     }
 
+    public void createTask(String url)
+    {
+        new NearbyPlacesTask().execute(url);
+    }
     public class NearbyPlacesTask extends AsyncTask<String,Void,ArrayList<Stop>>
     {
         @Override
@@ -336,9 +343,31 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
                 JSONArray jsonArray = jsonObject.getJSONArray("results");
                 for(int i=0; i<jsonArray.length();i++)
                 {
+                    //mapActivity.stops.add(new Stop("Mantri","Naga-Mantr","01:20 am", "5", "PURPLE"));
                     String name = jsonArray.getJSONObject(i).getString("name");
-                    Stop stop = new Stop(name,"","","","");
-                    mapActivity.stops.add(stop);
+                    String subwayUrl = "http://prgzz.eastus.cloudapp.azure.com/api-transport/api/metro/" + name;
+                    Request request1 = new Request.Builder()
+                            .url(subwayUrl)
+                            .build();
+                    Response response1 = client.newCall(request1).execute();
+                    String responseData1 = response1.body().string();
+                    JSONArray jsonArray1 = new JSONArray(responseData1);
+                    for(int j=0; j<jsonArray1.length();j++)
+                    {
+                        if(jsonArray1.getJSONObject(j) != null)
+                        {
+                            ArrayList<String> times = new ArrayList<>();
+                            String route = jsonArray1.getJSONObject(j).getString("UP");
+                            String line = jsonArray1.getJSONObject(j).getString("line");
+                            JSONArray jArray = jsonArray1.getJSONObject(j).getJSONArray("time");
+                            for(int k=0; k<jArray.length();k++)
+                                times.add(jArray.getString(k));
+                            String time = jArray.getString(0);
+                            String orderNo = String.valueOf(i+j+1);
+                            Stop stop = new Stop(name,route,time,orderNo,line,times);
+                            mapActivity.stops.add(stop);
+                        }
+                    }
                 }
             }
             catch (IOException e){}
@@ -351,6 +380,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         protected void onPostExecute(ArrayList<Stop> stops)
         {
             mapActivity.stopAdapter.notifyDataSetChanged();
+            mapActivity.swipeRefreshLayout.setRefreshing(false);
         }
 
     }

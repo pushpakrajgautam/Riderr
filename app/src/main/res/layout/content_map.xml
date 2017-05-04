@@ -67,7 +67,7 @@
             android:orientation="horizontal"
             android:id="@+id/panel_text"
             android:background="#37474F"
-            android:elevation="4dp">
+            android:elevation="1dp">
 
                 <com.varunest.sparkbutton.SparkButton
                     android:id="@+id/spark_train"
@@ -120,12 +120,19 @@
 
         </LinearLayout>
 
-            <android.support.v7.widget.RecyclerView
+            <android.support.v4.widget.SwipeRefreshLayout
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/swipeContainer"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_weight="1">
+
+            <android.support.v7.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:id="@+id/the_list">
             </android.support.v7.widget.RecyclerView>
+            </android.support.v4.widget.SwipeRefreshLayout>
         </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
         <android.support.v7.widget.CardView
@@ -151,7 +158,7 @@
 
         <android.support.v7.widget.CardView
             android:layout_width="wrap_content"
-            android:id="@+id/card_drawer_view"
+            android:id="@+id/card_button_view"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             card_view:cardCornerRadius="16dp"
