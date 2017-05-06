@@ -440,6 +440,9 @@ public class MapActivity extends AppCompatActivity
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
                 googleMap.setPadding(0,0,0, (int) ((panelHeight - visiblePanelHeight) *slideOffset));
                 loc_button.setTranslationY(-(panelHeight - visiblePanelHeight) *slideOffset);
+                final int scrollViewHeight = (int) ((panelHeight - visiblePanelHeight) * (slideOffset));
+                rvStops.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        scrollViewHeight));
                 if(slideOffset >0.8)
                 {
                     sparkSearch.setAlpha(1 - slideOffset);

@@ -214,7 +214,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
         urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-                "&radius=2000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                "&radius=50000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
         new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
@@ -309,7 +309,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
         urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-                "&radius=2000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                "&radius=50000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         //mapActivity.stops.add(new Stop("Mantri","Naga-Mantr","01:20 am", "5", "PURPLE"));
         //mapActivity.stopAdapter.notifyDataSetChanged();
         new NearbyPlacesTask().execute(urlMetro);
@@ -326,6 +326,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         {
             super.onPreExecute();
             mapActivity.stops.clear();
+            mapActivity.stopAdapter.notifyDataSetChanged();
         }
 
         @Override
