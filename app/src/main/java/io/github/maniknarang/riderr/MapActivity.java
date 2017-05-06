@@ -100,7 +100,7 @@ public class MapActivity extends AppCompatActivity
 {
     private DrawerLayout drawer;
     private SparkButton loc_button,spark_train,spark_parking,spark_cycle,spark_bus;
-    private SlidingUpPanelLayout slidingUpPanelLayout;
+    public SlidingUpPanelLayout slidingUpPanelLayout;
     private FrameLayout frameLayout;
     private MapFragment mapFragment;
     private LocationManager locationManager;
@@ -115,6 +115,8 @@ public class MapActivity extends AppCompatActivity
     private FragmentManager fragmentManager;
     private DetailFragment detailFragment;
     private LinearLayout linearLayout;
+    private int thePanelHeight;
+    private GoogleMap googleMap;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState)
@@ -258,6 +260,14 @@ public class MapActivity extends AppCompatActivity
         rvStops.setLayoutManager(new LinearLayoutManager(this));
         stopAdapter = new StopAdapter(this,stops);
         rvStops.setAdapter(stopAdapter);
+        linearLayout = (LinearLayout) findViewById(R.id.panel_text);
+        linearLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                linearLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                thePanelHeight = linearLayout.getHeight();
+            }
+        });
 
         ItemTouchHelper.Callback callback = new RVHItemTouchHelperCallback(stopAdapter, true, true,
                 true);
@@ -269,7 +279,6 @@ public class MapActivity extends AppCompatActivity
             @Override
             public void onItemClick(View view, final int position)
             {
-                linearLayout = (LinearLayout) findViewById(R.id.panel_text);
 
                 Animation fadeOut = new AlphaAnimation(1, 0);
                 fadeOut.setInterpolator(new AccelerateInterpolator());
@@ -282,10 +291,16 @@ public class MapActivity extends AppCompatActivity
                         Bundle bundle = new Bundle();
                         String[] stopTimes = new String[stop.getTimes().size()];
                         stopTimes = stop.getTimes().toArray(stopTimes);
-                        String[] fragPass = {stop.getName(),stop.getRoute(),stop.getTime(),
-                                            stop.getOrderNo(),stop.getLine()};
+                        String[] oppTimes = new String[stop.getoppTimes().size()];
+                        oppTimes = stop.getoppTimes().toArray(oppTimes);
+                        String[] fragPass = {stop.getName(),stop.getRoute(),stop.getTime(),stop.getOtherTime(),
+                                            stop.getOrderNo(),stop.getOppOrder(),stop.getLine()};
                         bundle.putStringArray("stop_detail_head",fragPass);
                         bundle.putStringArray("stop_detail_time",stopTimes);
+                        bundle.putStringArray("stop_detail_opp_time",oppTimes);
+                        bundle.putString("stop_polyline",stop.getPolyline());
+                        double[] coords = {stop.getLat(),stop.getLng()};
+                        bundle.putDoubleArray("coords",coords);
                         linearLayout.setVisibility(View.GONE);
                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                         detailFragment = new DetailFragment();
@@ -336,6 +351,7 @@ public class MapActivity extends AppCompatActivity
     @Override
     public void onMapReady(final GoogleMap googleMap)
     {
+        this.googleMap=googleMap;
         loc_button.setEventListener(new SparkEventListener()
         {
             @Override
@@ -454,6 +470,14 @@ public class MapActivity extends AppCompatActivity
                     cardButton.setVisibility(View.GONE);
                     cardSearch.setVisibility(View.GONE);
                 }
+                else if(newState == SlidingUpPanelLayout.PanelState.COLLAPSED && detailFragment != null)
+                {
+                    slidingUpPanelLayout.setPanelHeight(detailFragment.heightr);
+                }
+                else if(newState == SlidingUpPanelLayout.PanelState.COLLAPSED && detailFragment == null)
+                {
+                    slidingUpPanelLayout.setPanelHeight(thePanelHeight);
+                }
                 else
                 {
                     button.setEnabled(true);
@@ -474,16 +498,22 @@ public class MapActivity extends AppCompatActivity
     {
         if(drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
-        else if(detailFragment != null)
+        else if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
+            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
+        else if(detailFragment != null && slidingUpPanelLayout.getPanelState() != SlidingUpPanelLayout.PanelState.COLLAPSED)
         {
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.remove(detailFragment).commit();
             detailFragment = null;
             linearLayout.setVisibility(View.VISIBLE);
             swipeRefreshLayout.setVisibility(View.VISIBLE);
+            CameraPosition cameraPosition = CameraPosition.builder()
+                    .target(new LatLng(mapFragment.mCurrentLocation.getLatitude(),
+                            mapFragment.mCurrentLocation.getLongitude()))
+                    .zoom(16f).bearing(0.0f).tilt(0.0f).build();
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+            googleMap.animateCamera(cameraUpdate);
         }
-        else if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
-            slidingUpPanelLayout.setPanelState(SlidingUpPanelLayout.PanelState.ANCHORED);
         else
             super.onBackPressed();
     }

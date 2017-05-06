@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,15 +44,19 @@ public class StopAdapter extends RecyclerView.Adapter<StopAdapter.ViewHolder> im
         TextView routeView = holder.routeView;
         TextView timeView = holder.timeView;
         TextView orderView = holder.orderView;
+        TextView oppOrderView = holder.oppOrderView;
         nameView.setText(stop.getName());
         routeView.setText(stop.getRoute());
         timeView.setText(stop.getTime());
         orderView.setText(stop.getOrderNo());
+        oppOrderView.setText(stop.getOppOrder());
+        TextView oppTimeView = holder.oppTimeView;
+        oppTimeView.setText(stop.getOtherTime());
 
         if(stop.getLine().equals("PURPLE"))
-            holder.orderView.setBackgroundResource(R.drawable.metro_line);
+            holder.orderList.setBackgroundResource(R.drawable.metro_line);
         else if(stop.getLine().equals("GREEN"))
-            holder.orderView.setBackgroundResource(R.drawable.metro_line_green);
+            holder.orderList.setBackgroundResource(R.drawable.metro_line_green);
     }
 
     @Override
@@ -77,7 +82,10 @@ public class StopAdapter extends RecyclerView.Adapter<StopAdapter.ViewHolder> im
         public TextView routeView;
         public TextView timeView;
         public TextView orderView;
+        public TextView oppOrderView;
         private View itemView;
+        public TextView oppTimeView;
+        public LinearLayout orderList;
 
         public ViewHolder(View itemView)
         {
@@ -95,6 +103,11 @@ public class StopAdapter extends RecyclerView.Adapter<StopAdapter.ViewHolder> im
             timeView.setTypeface(font4);
             orderView = (TextView) itemView.findViewById(R.id.order_no);
             orderView.setTypeface(font3);
+            oppOrderView = (TextView) itemView.findViewById(R.id.opp_order_no);
+            oppOrderView.setTypeface(font3);
+            oppTimeView = (TextView) itemView.findViewById(R.id.opp_time_view);
+            oppTimeView.setTypeface(font4);
+            orderList = (LinearLayout) itemView.findViewById(R.id.order_layout);
         }
 
         @Override

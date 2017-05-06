@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -213,7 +214,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
         urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-                "&radius=1000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                "&radius=2000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         String urlBus = "http://bmtcmob.hostg.in/api/busstops/stopnearby/lat/" + lat +"/lon/" + lng + "/rad/1";
         new NearbyPlacesTask().execute(urlMetro,urlBus);
     }
@@ -308,7 +309,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
         double lat = marker.getPosition().latitude;
         double lng = marker.getPosition().longitude;
         urlMetro = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lng +
-                "&radius=1000&type=bus_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
+                "&radius=2000&type=subway_station&key=AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg";
         //mapActivity.stops.add(new Stop("Mantri","Naga-Mantr","01:20 am", "5", "PURPLE"));
         //mapActivity.stopAdapter.notifyDataSetChanged();
         new NearbyPlacesTask().execute(urlMetro);
@@ -352,22 +353,32 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
                     Response response1 = client.newCall(request1).execute();
                     String responseData1 = response1.body().string();
                     JSONArray jsonArray1 = new JSONArray(responseData1);
-                    for(int j=0; j<jsonArray1.length();j++)
-                    {
-                        if(jsonArray1.getJSONObject(j) != null)
+                        if(jsonArray1.getJSONObject(0) != null)
                         {
                             ArrayList<String> times = new ArrayList<>();
-                            String route = jsonArray1.getJSONObject(j).getString("UP");
-                            String line = jsonArray1.getJSONObject(j).getString("line");
-                            JSONArray jArray = jsonArray1.getJSONObject(j).getJSONArray("time");
-                            for(int k=0; k<jArray.length();k++)
+                            String route = jsonArray1.getJSONObject(0).getString("UP");
+                            String line = jsonArray1.getJSONObject(0).getString("line");
+                            String orderNo = jsonArray1.getJSONObject(0).getString("order_no");
+                            String polyline = jsonArray1.getJSONObject(0).getString("polyline");
+                            JSONArray jArray = jsonArray1.getJSONObject(0).getJSONArray("time");
+                            for (int k = 0; k < jArray.length(); k++)
                                 times.add(jArray.getString(k));
                             String time = jArray.getString(0);
-                            String orderNo = String.valueOf(i+j+1);
-                            Stop stop = new Stop(name,route,time,orderNo,line,times);
-                            mapActivity.stops.add(stop);
+                            double lat = jsonArray1.getJSONObject(0).getDouble("lat");
+                            double lng = jsonArray1.getJSONObject(0).getDouble("lng");
+                            if(jsonArray1.getJSONObject(1) != null)
+                            {
+                                ArrayList<String> opptimes = new ArrayList<>();
+                                JSONArray jArray5 = jsonArray1.getJSONObject(1).getJSONArray("time");
+                                String oppOrder = jsonArray1.getJSONObject(1).getString("order_no");
+                                for (int k = 0; k < jArray5.length(); k++)
+                                    opptimes.add(jArray5.getString(k));
+                                String otherTime = jArray5.getString(0);
+                                Stop stop = new Stop(name,route,time,otherTime,orderNo,oppOrder,line,times,opptimes,
+                                        polyline,lat,lng);
+                                mapActivity.stops.add(stop);
+                            }
                         }
-                    }
                 }
             }
             catch (IOException e){}
@@ -383,5 +394,23 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
             mapActivity.swipeRefreshLayout.setRefreshing(false);
         }
 
+    }
+
+    public void makeRoute(ArrayList<LatLng> pointList,double lat, double lng)
+    {
+        PolylineOptions polylineOptions = new PolylineOptions();
+        polylineOptions.addAll(pointList).width(20).color(getResources().getColor(R.color.colorPrimary));
+        googleMap.addPolyline(polylineOptions);
+        for(int i=0; i<pointList.size();i+=100)
+        {
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(pointList.get(i)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+            googleMap.addMarker(markerOptions);
+        }
+        CameraPosition cameraPosition = CameraPosition.builder()
+                .target(new LatLng(lat,lng))
+                .zoom(12.5f).bearing(0.0f).tilt(0.0f).build();
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+        googleMap.animateCamera(cameraUpdate);
     }
 }

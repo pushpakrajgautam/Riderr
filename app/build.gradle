@@ -48,5 +48,7 @@ dependencies {
     compile 'com.daimajia.androidanimations:library:2.2@aar'
     compile 'com.sackcentury:shinebutton:0.1.7'
     compile 'com.github.nisrulz:recyclerviewhelper:25.3.1'
+    compile 'com.github.luongvo:iOS-SwitchView:1.0.0'
+    compile 'com.bigmercu.cBox:cbox:1.08'
     testCompile 'junit:junit:4.12'
 }
