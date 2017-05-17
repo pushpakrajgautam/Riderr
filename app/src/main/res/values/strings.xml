@@ -7,4 +7,5 @@
     <string name="internet">Not connected to internet</string>
     <string name="google_api_key">AIzaSyDAc8Rzeb8RitUsXEUr7CTU-hc5EdAo4Xg</string>
     <string name="google_dir_key">AIzaSyCj9ZJU7AnM0DMXhOIQwHGAcLwZvROD39k</string>
+    <string name="edittext_hint"><font size="14">Where Do You Want To Go?</font></string>
 </resources>

@@ -52,6 +52,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -365,8 +366,7 @@ public class MapActivity extends AppCompatActivity
                     @Override
                     public void onAnimationEnd(Animation animation)
                     {
-                        if(searchFragment == null)
-                            searchFragment = new SearchFragment();
+                        searchFragment = new SearchFragment();
                         String fragmentTag = searchFragment.getClass().getName();
                         boolean fragmentPopped = fragmentManager
                                 .popBackStackImmediate(fragmentTag , 0);
@@ -553,7 +553,6 @@ public class MapActivity extends AppCompatActivity
     public void onBackPressed()
     {
         drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-
         if(drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
         else if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
