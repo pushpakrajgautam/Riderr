@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Path;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -17,6 +18,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -50,7 +52,12 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Filterable;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -71,6 +78,9 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -88,26 +98,31 @@ import com.varunest.sparkbutton.SparkEventListener;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import github.nisrulz.recyclerviewhelper.RVHItemClickListener;
 import github.nisrulz.recyclerviewhelper.RVHItemDividerDecoration;
 import github.nisrulz.recyclerviewhelper.RVHItemTouchHelperCallback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MapActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,ActivityCompat.OnRequestPermissionsResultCallback,
         OnMapReadyCallback,ResultCallback<LocationSettingsResult>,GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,LocationListener
 {
-    private DrawerLayout drawer;
+    public DrawerLayout drawer;
     private SparkButton loc_button,spark_train,spark_parking,spark_cycle,spark_bus;
     public SlidingUpPanelLayout slidingUpPanelLayout;
     private FrameLayout frameLayout;
     private MapFragment mapFragment;
     private LocationManager locationManager;
     private Toast myToast;
-    private SparkButton sparkSearch;
+    private SearchFragment searchFragment;
     private SparkButton button;
-    private CardView cardSearch,cardButton;
+    private LinearLayout cardButton;
     public RecyclerView rvStops;
     public StopAdapter stopAdapter;
     public ArrayList<Stop> stops;
@@ -206,7 +221,7 @@ public class MapActivity extends AppCompatActivity
 
         loc_button = (SparkButton) findViewById(R.id.spark_loc);
 
-        cardButton = (CardView) findViewById(R.id.card_button_view);
+        cardButton = (LinearLayout) findViewById(R.id.card_button_view);
         button  = (SparkButton) findViewById(R.id.spark_draw);
         button.setEventListener(new SparkEventListener() {
             @Override
@@ -232,7 +247,7 @@ public class MapActivity extends AppCompatActivity
             }
         });
 
-        cardSearch = (CardView) findViewById(R.id.card_search_view);
+        /*cardSearch = (CardView) findViewById(R.id.card_search_view);
         sparkSearch = (SparkButton) findViewById(R.id.spark_search);
         sparkSearch.setEventListener(new SparkEventListener()
         {
@@ -253,7 +268,7 @@ public class MapActivity extends AppCompatActivity
             {
 
             }
-        });
+        });*/
 
         stops = new ArrayList<>();
         rvStops = (RecyclerView) findViewById(R.id.the_list);
@@ -328,6 +343,48 @@ public class MapActivity extends AppCompatActivity
             public void onRefresh()
             {
                 mapFragment.createTask(mapFragment.urlMetro);
+            }
+        });
+
+        Typeface font1 = Typeface.createFromAsset(getAssets(),"Raleway-SemiBold.ttf");
+        final TextView searchBar = (TextView) findViewById(R.id.search_bar);
+        searchBar.setTypeface(font1);
+        searchBar.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                Animation fadeOut = new AlphaAnimation(1, 0);
+                fadeOut.setInterpolator(new AccelerateInterpolator());
+                fadeOut.setDuration(300);
+                fadeOut.setAnimationListener(new Animation.AnimationListener()
+                {
+                    @Override
+                    public void onAnimationStart(Animation animation) {}
+
+                    @Override
+                    public void onAnimationEnd(Animation animation)
+                    {
+                        if(searchFragment == null)
+                            searchFragment = new SearchFragment();
+                        String fragmentTag = searchFragment.getClass().getName();
+                        boolean fragmentPopped = fragmentManager
+                                .popBackStackImmediate(fragmentTag , 0);
+                        if(!fragmentPopped && fragmentManager.findFragmentByTag(fragmentTag) == null)
+                        {
+                            FragmentTransaction ft = fragmentManager.beginTransaction();
+                            ft.addToBackStack(searchFragment.getClass().getName());
+                            ft.replace(R.id.frag_container, searchFragment, searchFragment.getClass().getName());
+                            ft.commit();
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {}
+                });
+                FrameLayout frameLayout = (FrameLayout) findViewById(R.id.frag_container);
+                frameLayout.startAnimation(fadeOut);
+
             }
         });
     }
@@ -440,21 +497,18 @@ public class MapActivity extends AppCompatActivity
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
                 googleMap.setPadding(0,0,0, (int) ((panelHeight - visiblePanelHeight) *slideOffset));
                 loc_button.setTranslationY(-(panelHeight - visiblePanelHeight) *slideOffset);
-                final int scrollViewHeight = (int) ((panelHeight - visiblePanelHeight) * (slideOffset));
-                rvStops.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                        scrollViewHeight));
-                if(slideOffset >0.8)
+                if(slideOffset >0.7)
                 {
-                    sparkSearch.setAlpha(1 - slideOffset);
+                    //sparkSearch.setAlpha(1 - slideOffset);
                     button.setAlpha(1 - slideOffset);
-                    cardSearch.setAlpha(1-slideOffset);
+                    //cardSearch.setAlpha(1-slideOffset);
                     cardButton.setAlpha(1-slideOffset);
                 }
                 else
                 {
-                    sparkSearch.setAlpha(1);
+                    //sparkSearch.setAlpha(1);
                     button.setAlpha(1);
-                    cardSearch.setAlpha(1);
+                    //cardSearch.setAlpha(1);
                     cardButton.setAlpha(1);
                 }
                 googleMap.moveCamera(cameraUpdate);
@@ -467,11 +521,11 @@ public class MapActivity extends AppCompatActivity
                 if(newState == SlidingUpPanelLayout.PanelState.EXPANDED)
                 {
                     button.setEnabled(false);
-                    sparkSearch.setEnabled(false);
+                    //sparkSearch.setEnabled(false);
                     button.setVisibility(View.GONE);
-                    sparkSearch.setVisibility(View.GONE);
+                    //sparkSearch.setVisibility(View.GONE);
                     cardButton.setVisibility(View.GONE);
-                    cardSearch.setVisibility(View.GONE);
+                    //cardSearch.setVisibility(View.GONE);
                 }
                 else if(newState == SlidingUpPanelLayout.PanelState.COLLAPSED && detailFragment != null)
                 {
@@ -484,21 +538,22 @@ public class MapActivity extends AppCompatActivity
                 else
                 {
                     button.setEnabled(true);
-                    sparkSearch.setEnabled(true);
+                    //sparkSearch.setEnabled(true);
                     button.setVisibility(View.VISIBLE);
-                    sparkSearch.setVisibility(View.VISIBLE);
+                    //sparkSearch.setVisibility(View.VISIBLE);
                     cardButton.setVisibility(View.VISIBLE);
-                    cardSearch.setVisibility(View.VISIBLE);
+                    //cardSearch.setVisibility(View.VISIBLE);
                 }
             }
         });
-
 
     }
 
     @Override
     public void onBackPressed()
     {
+        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+
         if(drawer.isDrawerOpen(GravityCompat.START))
             drawer.closeDrawer(GravityCompat.START);
         else if(slidingUpPanelLayout.getPanelState() == SlidingUpPanelLayout.PanelState.EXPANDED)
@@ -666,5 +721,4 @@ public class MapActivity extends AppCompatActivity
         }
 
     }
-
 }

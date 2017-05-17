@@ -157,7 +157,7 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
     public void onMapReady(GoogleMap googleMap)
     {
         this.googleMap=googleMap;
-        googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
+        //googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.maps));
     }
 
     @Override

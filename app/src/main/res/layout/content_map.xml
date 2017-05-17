@@ -12,7 +12,8 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:id="@+id/frag_container">
 
         <com.sothree.slidinguppanel.SlidingUpPanelLayout
             xmlns:sothree="http://schemas.android.com/apk/res-auto"
@@ -135,45 +136,35 @@
             </android.support.v4.widget.SwipeRefreshLayout>
         </LinearLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
-        <android.support.v7.widget.CardView
-            android:layout_width="wrap_content"
-            android:id="@+id/card_search_view"
-            android:layout_height="wrap_content"
-            android:background="#FFF"
-            android:alpha="0.9"
-            android:layout_gravity="top|right"
-            card_view:cardCornerRadius="16dp"
-            android:layout_margin="16dp"
-            android:elevation="0dp">
-            <com.varunest.sparkbutton.SparkButton
-                android:id="@+id/spark_search"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                app:sparkbutton_activeImage="@drawable/ic_gesture_black_24dp"
-                app:sparkbutton_iconSize="48dp"
-                app:sparkbutton_primaryColor="@color/colorPrimary"
-                app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
-                app:sparkbutton_animationSpeed="1.5"/>
-        </android.support.v7.widget.CardView>
 
-        <android.support.v7.widget.CardView
-            android:layout_width="wrap_content"
-            android:id="@+id/card_button_view"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top"
-            card_view:cardCornerRadius="16dp"
-            android:layout_margin="16dp"
-            android:elevation="16dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:id="@+id/card_button_view"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="top"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/rounded_corner">
             <com.varunest.sparkbutton.SparkButton
                 android:id="@+id/spark_draw"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="#37474F"
+                android:layout_marginRight="10dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 app:sparkbutton_activeImage="@drawable/ic_line_style_black_24dp"
-                app:sparkbutton_iconSize="48dp"
+                app:sparkbutton_iconSize="40dp"
                 app:sparkbutton_primaryColor="@color/colorPrimary"
                 app:sparkbutton_secondaryColor="@color/colorPrimaryDark"
                 app:sparkbutton_animationSpeed="1.5"/>
-        </android.support.v7.widget.CardView>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:textSize="12sp"
+                    android:gravity="center_vertical"
+                    android:id="@+id/search_bar"
+                    android:text="Where Do You Want To Go?"/>
+            </LinearLayout>
     </FrameLayout>
 </RelativeLayout>
