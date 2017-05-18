@@ -15,7 +15,8 @@
     <ImageView
         android:id="@+id/option_image"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"/>
 
     <LinearLayout
         android:layout_width="0dp"

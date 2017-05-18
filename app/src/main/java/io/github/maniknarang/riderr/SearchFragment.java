@@ -3,6 +3,7 @@ package io.github.maniknarang.riderr;
 import android.content.Context;
 import android.graphics.Path;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -30,7 +31,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -46,6 +51,7 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
     private AutoCompleteTask autoCompleteTask;
     private long startClickTime;
     private InputMethodManager imm;
+    private OkHttpClient client;
 
     @Nullable
     @Override
@@ -53,6 +59,8 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
     {
         View view = inflater.inflate(R.layout.search_frag,container,false);
         view.setClickable(true);
+        client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).build();
         mapActivity = (MapActivity) getActivity();
         mapActivity.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         autoCompleteTextView = (EditText) view.findViewById(R.id.auto_complete_text_view);
@@ -99,7 +107,6 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
             autoCompleteTask = new AutoCompleteTask();
             autoCompleteTask.execute(query);
         }
-        new AutoCompleteTask().execute(query);
     }
 
     @Override
@@ -132,8 +139,6 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
             ArrayList<OptionName> names = new ArrayList<>();
             String url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=" +
                     urls[0] + "&key=AIzaSyDbndlJPMDm4YnF3zOBNipW_7rD2MfvEXc";
-            OkHttpClient client = new OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS)
-                    .readTimeout(3, TimeUnit.SECONDS).writeTimeout(3, TimeUnit.SECONDS).build();
             Request request = new Request.Builder()
                     .url(url).build();
             Response response = null;
@@ -146,6 +151,16 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
                 {
                     String fullName = jsonArray.getJSONObject(i).getString("description");
                     String placeId = jsonArray.getJSONObject(i).getString("id");
+                    JSONArray typeArr = jsonArray.getJSONObject(i).getJSONArray("types");
+                    String symbol = fullName;
+                    for(int f=0; f<typeArr.length(); f++)
+                    {
+                        if(typeArr.getString(f).equals("transit_station"))
+                        {
+                            symbol = "bus";
+                            break;
+                        }
+                    }
                     String[] named = fullName.split(",");
                     String detaild = "";
                     for (int j = 1; j < named.length; j++)
@@ -160,12 +175,28 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
                     }
                     if (detaild.length() > 1)
                         detaild = detaild.substring(1);
-                        names.add(new OptionName(named[0], detaild, fullName, placeId));
+
+                    String[] metr = fullName.split(" ");
+                    for(int j=0; j<metr.length;j++)
+                    {
+                        if(metr[j].equals("metro") || metr[j].equals("Metro"))
+                        {
+                            symbol="metro";
+                            break;
+                        }
+                    }
+
+                    names.add(new OptionName(named[0], detaild, symbol, placeId));
                 }
                 return names;
             }
             catch (IOException e) {}
             catch (JSONException e) {}
+            finally
+            {
+                if(response != null)
+                    response.body().close();
+            }
             return names;
         }
 

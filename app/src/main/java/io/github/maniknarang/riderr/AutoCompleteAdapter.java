@@ -61,11 +61,16 @@ public class AutoCompleteAdapter extends ArrayAdapter
         TextView nameView = (TextView) listView.findViewById(R.id.name_view);
         TextView detailView = (TextView) listView.findViewById(R.id.detail_view);
         ImageView imageView = (ImageView) listView.findViewById(R.id.option_image);
+        if(optionName.getSymbol().equals("bus"))
+            imageView.setImageResource(R.drawable.ic_directions_bus_black_24dp);
+        else if(optionName.getSymbol().equals("metro"))
+            imageView.setImageResource(R.drawable.ic_directions_subway_black_24dp);
+        else
+            imageView.setImageResource(R.drawable.ic_place_black1_24dp);
         nameView.setText(optionName.getName());
         nameView.setTypeface(font1);
         detailView.setText(optionName.getDesc());
         detailView.setTypeface(font1);
-        imageView.setImageBitmap(null);
         return listView;
     }
 

@@ -337,9 +337,10 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
             Request request = new Request.Builder()
                     .url(urls[0])
                     .build();
+            Response response = null;
             try
             {
-                Response response = client.newCall(request).execute();
+                response = client.newCall(request).execute();
                 String responseData = response.body().string();
                 JSONObject jsonObject = new JSONObject(responseData);
                 JSONArray jsonArray = jsonObject.getJSONArray("results");
@@ -384,6 +385,11 @@ public class MapFragment extends SupportMapFragment implements  GoogleMap.OnInfo
             }
             catch (IOException e){}
             catch (JSONException e){}
+            finally
+            {
+                if(response != null)
+                response.body().close();
+            }
 
             return mapActivity.stops;
         }
