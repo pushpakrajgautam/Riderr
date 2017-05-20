@@ -248,29 +248,6 @@ public class MapActivity extends AppCompatActivity
             }
         });
 
-        /*cardSearch = (CardView) findViewById(R.id.card_search_view);
-        sparkSearch = (SparkButton) findViewById(R.id.spark_search);
-        sparkSearch.setEventListener(new SparkEventListener()
-        {
-            @Override
-            public void onEvent(ImageView button, boolean buttonState)
-            {
-
-            }
-
-            @Override
-            public void onEventAnimationEnd(ImageView button, boolean buttonState)
-            {
-
-            }
-
-            @Override
-            public void onEventAnimationStart(ImageView button, boolean buttonState)
-            {
-
-            }
-        });*/
-
         stops = new ArrayList<>();
         rvStops = (RecyclerView) findViewById(R.id.the_list);
         rvStops.setLayoutManager(new LinearLayoutManager(this));
@@ -370,7 +347,7 @@ public class MapActivity extends AppCompatActivity
                         String fragmentTag = searchFragment.getClass().getName();
                         boolean fragmentPopped = fragmentManager
                                 .popBackStackImmediate(fragmentTag , 0);
-                        if(!fragmentPopped && fragmentManager.findFragmentByTag(fragmentTag) == null)
+                        if(!fragmentPopped)
                         {
                             FragmentTransaction ft = fragmentManager.beginTransaction();
                             ft.addToBackStack(searchFragment.getClass().getName());
@@ -720,4 +697,23 @@ public class MapActivity extends AppCompatActivity
         }
 
     }
+
+    public void closeSearchAndFindDir(boolean findDir)
+    {
+        if(!findDir)
+        {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(searchFragment.getView().getApplicationWindowToken(), 0);
+            FragmentTransaction ft = fragmentManager.beginTransaction();
+            ft.remove(searchFragment).commit();
+            searchFragment = null;
+            fragmentManager.popBackStack();
+            drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+        }
+        else
+        {
+
+        }
+    }
+
 }

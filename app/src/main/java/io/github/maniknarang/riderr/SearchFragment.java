@@ -23,6 +23,7 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -52,6 +53,7 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
     private long startClickTime;
     private InputMethodManager imm;
     private OkHttpClient client;
+    private ImageView closeView;
 
     @Nullable
     @Override
@@ -79,13 +81,32 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
         listView.setOnTouchListener(this);
         TextView textView = (TextView) view.findViewById(R.id.powered);
         textView.setTypeface(dogFont);
+        ImageView backView = (ImageView) view.findViewById(R.id.back_op);
+        backView.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                mapActivity.closeSearchAndFindDir(false);
+            }
+        });
+        closeView = (ImageView) view.findViewById(R.id.cross_op);
+        closeView.setVisibility(View.GONE);
+        closeView.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                autoCompleteTextView.setText("");
+            }
+        });
         return view;
     }
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l)
     {
-        autoCompleteTextView.setText(((OptionName)adapterView.getItemAtPosition(i)).getName());
+        ((OptionName)adapterView.getItemAtPosition(i)).getName();
         Toast.makeText(getContext(),"Touched",Toast.LENGTH_LONG).show();
     }
 
@@ -96,6 +117,10 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2)
     {
         query = charSequence.toString();
+        if(query.length() != 0)
+            closeView.setVisibility(View.VISIBLE);
+        else
+            closeView.setVisibility(View.GONE);
         if (autoCompleteTask != null)
         {
             autoCompleteTask.cancel(true);
@@ -119,7 +144,6 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
             startClickTime = System.currentTimeMillis();
         else if (event.getAction() == MotionEvent.ACTION_UP)
         {
-
             if (System.currentTimeMillis() - startClickTime < ViewConfiguration.getTapTimeout())
             {
             }
@@ -142,7 +166,8 @@ public class SearchFragment extends Fragment implements AdapterView.OnItemClickL
             Request request = new Request.Builder()
                     .url(url).build();
             Response response = null;
-            try {
+            try
+            {
                 response = client.newCall(request).execute();
                 String responseBody = response.body().string();
                 JSONObject jsonObject = new JSONObject(responseBody);
